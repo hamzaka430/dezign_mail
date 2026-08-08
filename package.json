@@ -4,21 +4,25 @@
   "description": "Dezignmail - Temporary Email Service",
   "private": true,
   "scripts": {
-    "dev": "vite",
-    "dev:sandbox": "wrangler pages dev dist --ip 0.0.0.0 --port 3000",
+    "dev": "wrangler pages dev dist --compatibility-date=2024-09-23",
+    "dev:sandbox": "vite build && wrangler pages dev dist",
     "build": "vite build",
     "preview": "wrangler pages dev dist",
-    "deploy": "npm run build && wrangler pages deploy dist",
-    "cf-typegen": "wrangler types --env-interface CloudflareBindings"
+    "deploy": "vite build && wrangler pages deploy dist --project-name dezignmail",
+    "cf-typegen": "wrangler types --env-interface CloudflareBindings",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@neondatabase/serverless": "^1.1.0",
     "hono": "^4.7.11"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250705.0",
     "@hono/vite-cloudflare-pages": "^0.4.2",
+    "@types/node": "^26.2.0",
+    "typescript": "^5.8.3",
     "vite": "^5.4.19",
-    "wrangler": "^3.78.0",
-    "typescript": "^5.8.3"
-  }
+    "wrangler": "^3.78.0"
+  },
+  "type": "module"
 }

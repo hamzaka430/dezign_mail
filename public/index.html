@@ -1,477 +1,4 @@
-import { Hono } from 'hono'
-import { cors } from 'hono/cors'
-import { serveStatic } from 'hono/cloudflare-workers'
-
-type Bindings = {
-  DB?: D1Database
-}
-
-const app = new Hono<{ Bindings: Bindings }>()
-
-// Enable CORS for all API routes
-app.use('/api/*', cors({
-  origin: '*',
-  allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowHeaders: ['Content-Type', 'Authorization'],
-}))
-
-// Serve static files
-app.use('/static/*', serveStatic({ root: './public' }))
-
-// ─── Utility Functions ──────────────────────────────────────────────────────
-
-const ADJECTIVES = ['swift', 'dark', 'bright', 'cool', 'smart', 'fast', 'deep', 'sharp', 'sleek', 'bold']
-const NOUNS = ['fox', 'hawk', 'wolf', 'bear', 'eagle', 'storm', 'blade', 'wave', 'spark', 'ghost']
-
-function generateRandomEmail(domain: string = 'dezignwise.online'): string {
-  const adj = ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)]
-  const noun = NOUNS[Math.floor(Math.random() * NOUNS.length)]
-  const num = Math.floor(Math.random() * 9000) + 1000
-  return `${adj}.${noun}.${num}@${domain}`
-}
-
-function generateSessionId(): string {
-  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789'
-  let result = ''
-  for (let i = 0; i < 32; i++) {
-    result += chars[Math.floor(Math.random() * chars.length)]
-  }
-  return result
-}
-
-function getDomainFromEmail(email: string): string {
-  return email.split('@')[1] || 'dezignwise.online'
-}
-
-// ─── In-Memory Fallback Store (when DB not bound) ───────────────────────────
-
-interface EmailMessage {
-  id: string
-  inbox_address: string
-  from_address: string
-  from_name: string
-  subject: string
-  body_text: string
-  body_html: string
-  received_at: string
-  is_read: boolean
-  has_attachments: boolean
-  size: number
-}
-
-interface InboxSession {
-  session_id: string
-  email_address: string
-  created_at: string
-  expires_at: string
-  ttl_seconds: number
-  is_active: boolean
-}
-
-const memoryStore: {
-  sessions: Map<string, InboxSession>
-  emails: Map<string, EmailMessage[]>
-} = {
-  sessions: new Map(),
-  emails: new Map()
-}
-
-// Pre-populate with demo data
-function seedDemoData() {
-  const now = new Date()
-  const expires = new Date(now.getTime() + 10 * 60 * 1000)
-  
-  const demoSession: InboxSession = {
-    session_id: 'demo-session-001',
-    email_address: 'swift.fox.4782@dezignwise.online',
-    created_at: now.toISOString(),
-    expires_at: expires.toISOString(),
-    ttl_seconds: 600,
-    is_active: true
-  }
-  memoryStore.sessions.set('demo-session-001', demoSession)
-  
-  const demoEmails: EmailMessage[] = [
-    {
-      id: 'msg-001',
-      inbox_address: 'swift.fox.4782@dezignwise.online',
-      from_address: 'welcome@github.com',
-      from_name: 'GitHub',
-      subject: 'Welcome to GitHub! Please verify your email',
-      body_text: 'Hi there! Please click the link below to verify your email address...',
-      body_html: '<h2>Welcome to GitHub!</h2><p>Please <a href="#">click here</a> to verify your email address.</p>',
-      received_at: new Date(now.getTime() - 120000).toISOString(),
-      is_read: false,
-      has_attachments: false,
-      size: 1248
-    },
-    {
-      id: 'msg-002',
-      inbox_address: 'swift.fox.4782@dezignwise.online',
-      from_address: 'noreply@discord.com',
-      from_name: 'Discord',
-      subject: 'Your Discord verification code: 847291',
-      body_text: 'Your Discord verification code is: 847291. This code expires in 10 minutes.',
-      body_html: '<div style="font-family:sans-serif"><h3>Discord Verification</h3><p>Your code: <strong>847291</strong></p></div>',
-      received_at: new Date(now.getTime() - 300000).toISOString(),
-      is_read: true,
-      has_attachments: false,
-      size: 892
-    },
-    {
-      id: 'msg-003',
-      inbox_address: 'swift.fox.4782@dezignwise.online',
-      from_address: 'security@twitter.com',
-      from_name: 'Twitter Security',
-      subject: 'Confirm your Twitter account',
-      body_text: 'To complete your Twitter registration, please confirm your email address.',
-      body_html: '<div><h2>Confirm your account</h2><p>Click below to confirm your Twitter account.</p><a href="#" style="background:#1DA1F2;color:#fff;padding:10px 20px;border-radius:100px;text-decoration:none">Confirm Email</a></div>',
-      received_at: new Date(now.getTime() - 600000).toISOString(),
-      is_read: false,
-      has_attachments: false,
-      size: 1567
-    }
-  ]
-  memoryStore.emails.set('swift.fox.4782@dezignwise.online', demoEmails)
-}
-
-seedDemoData()
-
-// ─── API Routes ─────────────────────────────────────────────────────────────
-
-// POST /api/inbox/create - Create a new temporary inbox
-app.post('/api/inbox/create', async (c) => {
-  const body = await c.req.json().catch(() => ({})) as any
-  const ttl = body.ttl || 600 // default 10 minutes
-  const customAlias = body.custom_alias
-
-  const sessionId = generateSessionId()
-  const emailAddress = customAlias
-    ? `${customAlias}@dezignwise.online`
-    : generateRandomEmail()
-
-  const now = new Date()
-  const expires = new Date(now.getTime() + ttl * 1000)
-
-  const session: InboxSession = {
-    session_id: sessionId,
-    email_address: emailAddress,
-    created_at: now.toISOString(),
-    expires_at: expires.toISOString(),
-    ttl_seconds: ttl,
-    is_active: true
-  }
-
-  if (c.env?.DB) {
-    try {
-      await c.env.DB.prepare(`
-        INSERT OR IGNORE INTO inbox_sessions (session_id, email_address, created_at, expires_at, ttl_seconds, is_active)
-        VALUES (?, ?, ?, ?, ?, 1)
-      `).bind(sessionId, emailAddress, now.toISOString(), expires.toISOString(), ttl).run()
-    } catch (e) {
-      console.error('DB error:', e)
-    }
-  } else {
-    memoryStore.sessions.set(sessionId, session)
-    memoryStore.emails.set(emailAddress, [])
-  }
-
-  return c.json({
-    success: true,
-    session_id: sessionId,
-    email_address: emailAddress,
-    expires_at: expires.toISOString(),
-    ttl_seconds: ttl,
-    domain: getDomainFromEmail(emailAddress)
-  })
-})
-
-// GET /api/inbox/:sessionId - Get inbox info
-app.get('/api/inbox/:sessionId', async (c) => {
-  const sessionId = c.req.param('sessionId')
-
-  let session: InboxSession | null = null
-
-  if (c.env?.DB) {
-    try {
-      const row = await c.env.DB.prepare(
-        'SELECT * FROM inbox_sessions WHERE session_id = ?'
-      ).bind(sessionId).first<InboxSession>()
-      session = row || null
-    } catch (e) {
-      console.error('DB error:', e)
-    }
-  } else {
-    session = memoryStore.sessions.get(sessionId) || null
-  }
-
-  if (!session) {
-    return c.json({ error: 'Session not found' }, 404)
-  }
-
-  const now = new Date()
-  const expiresAt = new Date(session.expires_at)
-  const timeLeft = Math.max(0, Math.floor((expiresAt.getTime() - now.getTime()) / 1000))
-  const isExpired = timeLeft === 0
-
-  if (isExpired) {
-    session.is_active = false
-  }
-
-  return c.json({
-    session_id: session.session_id,
-    email_address: session.email_address,
-    created_at: session.created_at,
-    expires_at: session.expires_at,
-    time_left_seconds: timeLeft,
-    is_active: !isExpired,
-    domain: getDomainFromEmail(session.email_address)
-  })
-})
-
-// GET /api/inbox/:sessionId/messages - Get all messages for inbox
-app.get('/api/inbox/:sessionId/messages', async (c) => {
-  const sessionId = c.req.param('sessionId')
-
-  let session: InboxSession | null = null
-
-  if (c.env?.DB) {
-    try {
-      const row = await c.env.DB.prepare(
-        'SELECT * FROM inbox_sessions WHERE session_id = ?'
-      ).bind(sessionId).first<InboxSession>()
-      session = row || null
-    } catch (e) {
-      console.error('DB error:', e)
-    }
-  } else {
-    session = memoryStore.sessions.get(sessionId) || null
-  }
-
-  if (!session) {
-    return c.json({ error: 'Session not found' }, 404)
-  }
-
-  let messages: EmailMessage[] = []
-
-  if (c.env?.DB) {
-    try {
-      const rows = await c.env.DB.prepare(
-        'SELECT * FROM email_messages WHERE inbox_address = ? ORDER BY received_at DESC'
-      ).bind(session.email_address).all<EmailMessage>()
-      messages = rows.results || []
-    } catch (e) {
-      console.error('DB error:', e)
-    }
-  } else {
-    messages = memoryStore.emails.get(session.email_address) || []
-  }
-
-  return c.json({
-    session_id: sessionId,
-    email_address: session.email_address,
-    message_count: messages.length,
-    unread_count: messages.filter(m => !m.is_read).length,
-    messages: messages
-  })
-})
-
-// GET /api/inbox/:sessionId/messages/:msgId - Get single message
-app.get('/api/inbox/:sessionId/messages/:msgId', async (c) => {
-  const sessionId = c.req.param('sessionId')
-  const msgId = c.req.param('msgId')
-
-  let session: InboxSession | null = null
-
-  if (c.env?.DB) {
-    try {
-      const row = await c.env.DB.prepare(
-        'SELECT * FROM inbox_sessions WHERE session_id = ?'
-      ).bind(sessionId).first<InboxSession>()
-      session = row || null
-    } catch (e) {
-      console.error('DB error:', e)
-    }
-  } else {
-    session = memoryStore.sessions.get(sessionId) || null
-  }
-
-  if (!session) {
-    return c.json({ error: 'Session not found' }, 404)
-  }
-
-  let message: EmailMessage | null = null
-
-  if (c.env?.DB) {
-    try {
-      const row = await c.env.DB.prepare(
-        'SELECT * FROM email_messages WHERE id = ? AND inbox_address = ?'
-      ).bind(msgId, session.email_address).first<EmailMessage>()
-      message = row || null
-      if (message) {
-        await c.env.DB.prepare('UPDATE email_messages SET is_read = 1 WHERE id = ?').bind(msgId).run()
-        message.is_read = true
-      }
-    } catch (e) {
-      console.error('DB error:', e)
-    }
-  } else {
-    const msgs = memoryStore.emails.get(session.email_address) || []
-    message = msgs.find(m => m.id === msgId) || null
-    if (message) message.is_read = true
-  }
-
-  if (!message) {
-    return c.json({ error: 'Message not found' }, 404)
-  }
-
-  return c.json(message)
-})
-
-// DELETE /api/inbox/:sessionId/messages/:msgId - Delete a message
-app.delete('/api/inbox/:sessionId/messages/:msgId', async (c) => {
-  const sessionId = c.req.param('sessionId')
-  const msgId = c.req.param('msgId')
-
-  let session: InboxSession | null = null
-  if (c.env?.DB) {
-    const row = await c.env.DB.prepare('SELECT * FROM inbox_sessions WHERE session_id = ?').bind(sessionId).first<InboxSession>()
-    session = row || null
-  } else {
-    session = memoryStore.sessions.get(sessionId) || null
-  }
-
-  if (!session) return c.json({ error: 'Session not found' }, 404)
-
-  if (c.env?.DB) {
-    await c.env.DB.prepare('DELETE FROM email_messages WHERE id = ? AND inbox_address = ?').bind(msgId, session.email_address).run()
-  } else {
-    const msgs = memoryStore.emails.get(session.email_address) || []
-    memoryStore.emails.set(session.email_address, msgs.filter(m => m.id !== msgId))
-  }
-
-  return c.json({ success: true, message: 'Message deleted' })
-})
-
-// DELETE /api/inbox/:sessionId - Delete entire inbox / session
-app.delete('/api/inbox/:sessionId', async (c) => {
-  const sessionId = c.req.param('sessionId')
-
-  if (c.env?.DB) {
-    const row = await c.env.DB.prepare('SELECT * FROM inbox_sessions WHERE session_id = ?').bind(sessionId).first<InboxSession>()
-    if (row) {
-      await c.env.DB.prepare('DELETE FROM email_messages WHERE inbox_address = ?').bind(row.email_address).run()
-      await c.env.DB.prepare('DELETE FROM inbox_sessions WHERE session_id = ?').bind(sessionId).run()
-    }
-  } else {
-    const session = memoryStore.sessions.get(sessionId)
-    if (session) {
-      memoryStore.emails.delete(session.email_address)
-      memoryStore.sessions.delete(sessionId)
-    }
-  }
-
-  return c.json({ success: true, message: 'Inbox deleted' })
-})
-
-// POST /api/inbox/:sessionId/extend - Extend TTL
-app.post('/api/inbox/:sessionId/extend', async (c) => {
-  const sessionId = c.req.param('sessionId')
-  const body = await c.req.json().catch(() => ({})) as any
-  const extraSeconds = body.extra_seconds || 600
-
-  let session: InboxSession | null = null
-  if (c.env?.DB) {
-    const row = await c.env.DB.prepare('SELECT * FROM inbox_sessions WHERE session_id = ?').bind(sessionId).first<InboxSession>()
-    session = row || null
-  } else {
-    session = memoryStore.sessions.get(sessionId) || null
-  }
-
-  if (!session) return c.json({ error: 'Session not found' }, 404)
-
-  const newExpiry = new Date(new Date(session.expires_at).getTime() + extraSeconds * 1000)
-
-  if (c.env?.DB) {
-    await c.env.DB.prepare('UPDATE inbox_sessions SET expires_at = ? WHERE session_id = ?').bind(newExpiry.toISOString(), sessionId).run()
-  } else {
-    session.expires_at = newExpiry.toISOString()
-  }
-
-  return c.json({ success: true, expires_at: newExpiry.toISOString() })
-})
-
-// POST /api/receive - Webhook endpoint for Postfix/mail server to deliver emails
-app.post('/api/receive', async (c) => {
-  const body = await c.req.json().catch(() => null)
-  if (!body) return c.json({ error: 'Invalid payload' }, 400)
-
-  const { to, from, from_name, subject, body_text, body_html, size } = body as any
-  const inboxAddress = (to || '').toLowerCase().trim()
-  if (!inboxAddress) return c.json({ error: 'Missing to address' }, 400)
-
-  const msgId = `msg-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
-  const now = new Date().toISOString()
-
-  const newMessage: EmailMessage = {
-    id: msgId,
-    inbox_address: inboxAddress,
-    from_address: from || 'unknown@unknown.com',
-    from_name: from_name || 'Unknown',
-    subject: subject || '(no subject)',
-    body_text: body_text || '',
-    body_html: body_html || '',
-    received_at: now,
-    is_read: false,
-    has_attachments: false,
-    size: size || 0
-  }
-
-  if (c.env?.DB) {
-    try {
-      await c.env.DB.prepare(`
-        INSERT INTO email_messages (id, inbox_address, from_address, from_name, subject, body_text, body_html, received_at, is_read, has_attachments, size)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, 0, ?)
-      `).bind(msgId, inboxAddress, newMessage.from_address, newMessage.from_name, newMessage.subject, newMessage.body_text, newMessage.body_html, now, newMessage.size).run()
-    } catch (e) {
-      console.error('DB error storing message:', e)
-    }
-  } else {
-    const msgs = memoryStore.emails.get(inboxAddress) || []
-    msgs.unshift(newMessage)
-    memoryStore.emails.set(inboxAddress, msgs)
-  }
-
-  return c.json({ success: true, message_id: msgId })
-})
-
-// GET /api/health - Health check
-app.get('/api/health', (c) => {
-  return c.json({
-    status: 'ok',
-    service: 'Dezignmail API',
-    version: '1.0.0',
-    timestamp: new Date().toISOString(),
-    domain: 'dezignwise.online',
-    features: ['temporary-inbox', 'custom-alias', 'auto-expiry', 'real-mx-records']
-  })
-})
-
-// GET /api/domains - Available domains
-app.get('/api/domains', (c) => {
-  return c.json({
-    domains: ['dezignwise.online'],
-    default: 'dezignwise.online'
-  })
-})
-
-// ─── Frontend Route ──────────────────────────────────────────────────────────
-app.get('*', (c) => {
-  return c.html(getIndexHtml())
-})
-
-function getIndexHtml(): string {
-  return `<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -1033,24 +560,28 @@ function getIndexHtml(): string {
       line-height: 1.5;
     }
 
+
     /* ── Toast ────────────────────────────────────────────────────── */
-    #toast {
+    .toast {
       position: fixed;
-      bottom: var(--spacing-xl);
-      left: 50%;
-      transform: translateX(-50%) translateY(100px);
-      background: var(--color-surface-2);
-      color: var(--color-ink);
+      bottom: 24px;
+      right: 24px;
       padding: 12px 20px;
-      border-radius: var(--rounded-pill);
+      border-radius: 8px;
+      background: #1a1a1a;
+      color: #fff;
+      border: 1px solid #333;
       font-size: 14px;
-      font-weight: 500;
-      border: 1px solid var(--color-hairline);
-      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-      z-index: 1000;
-      white-space: nowrap;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: all 0.3s ease;
+      z-index: 9999;
     }
-    #toast.show { transform: translateX(-50%) translateY(0); }
+    .toast.toast-visible { opacity: 1; transform: translateY(0); }
+    .toast.toast-success { border-color: #22c55e; color: #22c55e; }
+    .toast.toast-error { border-color: #ef4444; color: #ef4444; }
+    .toast.toast-info { border-color: #0099ff; color: #0099ff; }
+
 
     /* ── Loading Spinner ──────────────────────────────────────────── */
     .spinner {
@@ -1110,6 +641,7 @@ function getIndexHtml(): string {
       color: var(--color-ink-muted);
     }
 
+
     /* ── Responsive Tweaks ────────────────────────────────────────── */
     @media (max-width: 810px) {
       .hero { padding: 56px 0 var(--spacing-xl); }
@@ -1118,10 +650,16 @@ function getIndexHtml(): string {
       nav { padding: 0 var(--spacing-lg); }
       .container { padding: 0 var(--spacing-lg); }
     }
+    @media (max-width: 640px) {
+      .inbox-header { flex-direction: column; gap: 12px; }
+      .email-address { font-size: 14px; word-break: break-all; }
+      .actions-bar { flex-wrap: wrap; }
+    }
     @media (max-width: 480px) {
       .inbox-actions { flex-wrap: wrap; }
       .inbox-actions .btn-primary { flex: 1; text-align: center; }
     }
+
   </style>
 </head>
 <body>
@@ -1359,7 +897,7 @@ function getIndexHtml(): string {
 </footer>
 
 <!-- Toast -->
-<div id="toast"></div>
+
 
 <script>
 // ── State ─────────────────────────────────────────────────────────────────
@@ -1376,19 +914,17 @@ let state = {
 
 // ── Init ──────────────────────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', () => {
-  const saved = sessionStorage.getItem('dezignmail_session')
-  if (saved) {
-    try {
-      const data = JSON.parse(saved)
-      state.sessionId = data.sessionId
-      state.emailAddress = data.emailAddress
-      state.expiresAt = data.expiresAt
-      state.totalTtl = data.totalTtl || 600
+  const savedInboxId = sessionStorage.getItem('dezignmail_inbox_id')
+  const savedInboxAddress = sessionStorage.getItem('dezignmail_inbox_address')
+  if (savedInboxId && savedInboxAddress) {
+      state.sessionId = savedInboxId
+      state.emailAddress = savedInboxAddress
       updateAddressDisplay()
       document.getElementById('view-btn').style.display = 'inline-flex'
-    } catch(e) {}
+      viewInbox()
+  } else {
+    generatePreviewEmail()
   }
-  generatePreviewEmail()
 })
 
 // ── Helpers ───────────────────────────────────────────────────────────────
@@ -1415,6 +951,17 @@ function scrollToInbox() {
   document.getElementById('inbox-generator').scrollIntoView({ behavior: 'smooth' })
 }
 
+function showExpiredState() {
+    showToast('Inbox expired or deleted.', 'error')
+    state.sessionId = null; state.emailAddress = null; state.expiresAt = null
+    sessionStorage.removeItem('dezignmail_inbox_id')
+    sessionStorage.removeItem('dezignmail_inbox_address')
+    document.getElementById('inbox-section').classList.remove('visible')
+    document.getElementById('view-btn').style.display = 'none'
+    document.getElementById('timer-wrapper').classList.remove('visible')
+    generatePreviewEmail()
+}
+
 // ── Create Inbox ──────────────────────────────────────────────────────────
 async function createInbox() {
   const btn = document.getElementById('create-btn-text')
@@ -1430,27 +977,24 @@ async function createInbox() {
         custom_alias: alias || undefined
       })
     })
-    const data = await res.json()
-    if (!res.ok) throw new Error(data.error || 'Failed')
+    const json = await res.json()
+    if (!res.ok || !json.success) throw new Error(json.error || 'Failed')
+    const data = json.data;
 
     state.sessionId = data.session_id
     state.emailAddress = data.email_address
     state.expiresAt = data.expires_at
     state.totalTtl = data.ttl_seconds
 
-    sessionStorage.setItem('dezignmail_session', JSON.stringify({
-      sessionId: state.sessionId,
-      emailAddress: state.emailAddress,
-      expiresAt: state.expiresAt,
-      totalTtl: state.totalTtl
-    }))
+    sessionStorage.setItem('dezignmail_inbox_id', state.sessionId)
+    sessionStorage.setItem('dezignmail_inbox_address', state.emailAddress)
 
     updateAddressDisplay()
     document.getElementById('view-btn').style.display = 'inline-flex'
     startTimer()
-    showToast('Inbox created! ✓')
+    showToast('Inbox created! ✓', 'success')
   } catch(e) {
-    showToast('Error: ' + e.message)
+    showToast(e.message, 'error')
   } finally {
     btn.textContent = 'Create Inbox'
   }
@@ -1488,25 +1032,48 @@ function updateTimer() {
 
 // ── View Inbox ────────────────────────────────────────────────────────────
 async function viewInbox() {
-  if (!state.sessionId) { showToast('Create an inbox first'); return; }
+  if (!state.sessionId) { showToast('Create an inbox first', 'error'); return; }
   document.getElementById('inbox-section').classList.add('visible')
   document.getElementById('inbox-title-email').textContent = state.emailAddress
   document.getElementById('inbox-section').scrollIntoView({ behavior: 'smooth' })
-  startPolling()
+  startPolling(state.sessionId)
   await refreshMessages()
 }
 
-function startPolling() {
-  if (state.pollingInterval) clearInterval(state.pollingInterval)
-  state.pollingInterval = setInterval(refreshMessages, 5000)
+function startPolling(inboxId) {
+  stopPolling()
+  state.pollingInterval = setInterval(async () => {
+    try {
+        const res = await fetch(`/api/inbox/${inboxId}`)
+        if (!res.ok) { stopPolling(); showExpiredState(); return }
+        const { data } = await res.json()
+        if (!data || !data.is_active || new Date(data.expires_at) < new Date()) {
+            stopPolling()
+            showExpiredState()
+            return
+        }
+
+        state.expiresAt = data.expires_at;
+        startTimer();
+
+        refreshMessages()
+    } catch(e) {
+        // network error, continue polling
+    }
+  }, 5000)
+}
+
+function stopPolling() {
+  if (state.pollingInterval) { clearInterval(state.pollingInterval); state.pollingInterval = null }
 }
 
 async function refreshMessages() {
   if (!state.sessionId) return
   try {
     const res = await fetch('/api/inbox/'+state.sessionId+'/messages')
-    const data = await res.json()
-    if (!res.ok) return
+    const json = await res.json()
+    if (!res.ok || !json.success) return
+    const data = json.data;
 
     state.messages = data.messages || []
     renderEmailList()
@@ -1521,35 +1088,36 @@ async function refreshMessages() {
 function renderEmailList() {
   const list = document.getElementById('email-list')
   if (!state.messages.length) {
-    list.innerHTML = \`<div class="email-list-empty">
+    list.innerHTML = `<div class="email-list-empty">
       <div class="email-list-empty-icon">✉</div>
       <div>No messages yet</div>
       <div style="font-size:13px;margin-top:8px;color:#666">Emails sent to your address will appear here.<br>Checking every 5 seconds…</div>
-    </div>\`
+    </div>`
     return
   }
 
-  list.innerHTML = state.messages.map(m => \`
-    <div class="email-item \${m.is_read ? '' : 'unread'}" onclick="openMessage('\${m.id}')">
-      <div class="\${m.is_read ? 'email-read-dot' : 'email-unread-dot'}"></div>
+  list.innerHTML = state.messages.map(m => `
+    <div class="email-item ${m.is_read ? '' : 'unread'}" onclick="openMessage('${m.id}')">
+      <div class="${m.is_read ? 'email-read-dot' : 'email-unread-dot'}"></div>
       <div class="email-item-body">
-        <div class="email-from">\${escHtml(m.from_name || m.from_address)}</div>
-        <div class="email-subject">\${escHtml(m.subject)}</div>
-        <div class="email-preview">\${escHtml((m.body_text || '').slice(0,100))}</div>
+        <div class="email-from">${escHtml(m.from_name || m.from_address)}</div>
+        <div class="email-subject">${escHtml(m.subject)}</div>
+        <div class="email-preview">${escHtml((m.body_text || '').slice(0,100))}</div>
       </div>
       <div class="email-item-meta">
-        <div class="email-time">\${formatTime(m.received_at)}</div>
+        <div class="email-time">${formatTime(m.received_at)}</div>
       </div>
     </div>
-  \`).join('')
+  `).join('')
 }
 
 // ── Message Detail ────────────────────────────────────────────────────────
 async function openMessage(msgId) {
   try {
     const res = await fetch('/api/inbox/'+state.sessionId+'/messages/'+msgId)
-    const msg = await res.json()
-    if (!res.ok) return
+    const json = await res.json()
+    if (!res.ok || !json.success) throw new Error(json.error || 'Failed to load message')
+    const msg = json.data;
 
     document.getElementById('detail-subject').textContent = msg.subject
     document.getElementById('detail-from').textContent = (msg.from_name ? msg.from_name+' <' : '') + msg.from_address + (msg.from_name ? '>' : '')
@@ -1571,7 +1139,7 @@ async function openMessage(msgId) {
     const m = state.messages.find(x => x.id === msgId)
     if (m) m.is_read = true
     renderEmailList()
-  } catch(e) { showToast('Error loading message') }
+  } catch(e) { showToast(e.message, 'error') }
 }
 
 function closeDetail() {
@@ -1581,11 +1149,12 @@ function closeDetail() {
 
 async function deleteMessage(msgId) {
   try {
-    await fetch('/api/inbox/'+state.sessionId+'/messages/'+msgId, { method: 'DELETE' })
+    const res = await fetch('/api/inbox/'+state.sessionId+'/messages/'+msgId, { method: 'DELETE' })
+    if (!res.ok) throw new Error('Failed to delete')
     closeDetail()
     await refreshMessages()
-    showToast('Message deleted')
-  } catch(e) { showToast('Error deleting message') }
+    showToast('Message deleted', 'success')
+  } catch(e) { showToast(e.message, 'error') }
 }
 
 // ── Inbox Actions ─────────────────────────────────────────────────────────
@@ -1597,46 +1166,49 @@ async function extendInbox() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ extra_seconds: 3600 })
     })
-    const data = await res.json()
-    if (res.ok) {
-      state.expiresAt = data.expires_at
+    const json = await res.json()
+    if (res.ok && json.success) {
+      state.expiresAt = json.data.expires_at
       state.totalTtl += 3600
       startTimer()
-      showToast('Extended by 1 hour ✓')
+      showToast('Extended by 1 hour ✓', 'success')
+    } else {
+        throw new Error(json.error || 'Failed to extend inbox')
     }
-  } catch(e) { showToast('Error extending inbox') }
+  } catch(e) { showToast(e.message, 'error') }
 }
 
 async function deleteInbox() {
   if (!confirm('Delete this inbox and all messages permanently?')) return
   try {
-    await fetch('/api/inbox/'+state.sessionId, { method: 'DELETE' })
-    state.sessionId = null; state.emailAddress = null; state.expiresAt = null
-    sessionStorage.removeItem('dezignmail_session')
-    if (state.pollingInterval) clearInterval(state.pollingInterval)
-    if (state.timerInterval) clearInterval(state.timerInterval)
-    document.getElementById('inbox-section').classList.remove('visible')
-    document.getElementById('view-btn').style.display = 'none'
-    document.getElementById('timer-wrapper').classList.remove('visible')
-    generatePreviewEmail()
-    showToast('Inbox deleted')
+    const res = await fetch('/api/inbox/'+state.sessionId, { method: 'DELETE' })
+    if(!res.ok) throw new Error('Failed to delete')
+    showExpiredState()
+    showToast('Inbox deleted', 'success')
     window.scrollTo({ top: 0, behavior: 'smooth' })
-  } catch(e) { showToast('Error deleting inbox') }
+  } catch(e) { showToast(e.message, 'error') }
 }
 
 async function refreshEmail() {
-  if (state.sessionId) { showToast('Delete current inbox first'); return; }
+  if (state.sessionId) { showToast('Delete current inbox first', 'error'); return; }
   generatePreviewEmail()
 }
 
 // ── Copy ──────────────────────────────────────────────────────────────────
 async function copyEmail() {
-  const email = document.getElementById('current-email').textContent
+  const address = document.getElementById('current-email').textContent
   try {
-    await navigator.clipboard.writeText(email)
-    showToast('Copied! ' + email)
+    await navigator.clipboard.writeText(address)
+    showToast('Copied!', 'success')
   } catch(e) {
-    showToast('Copy: ' + email)
+    // Fallback for non-HTTPS or older browsers
+    const el = document.createElement('textarea')
+    el.value = address
+    document.body.appendChild(el)
+    el.select()
+    document.execCommand('copy')
+    document.body.removeChild(el)
+    showToast('Copied!', 'success')
   }
 }
 
@@ -1655,17 +1227,17 @@ function formatTime(iso) {
   return d.toLocaleDateString()
 }
 
-let toastTimer
-function showToast(msg) {
-  const el = document.getElementById('toast')
-  el.textContent = msg
-  el.classList.add('show')
-  clearTimeout(toastTimer)
-  toastTimer = setTimeout(() => el.classList.remove('show'), 3000)
+function showToast(message, type = 'info') {
+  const toast = document.createElement('div')
+  toast.className = `toast toast-${type}`
+  toast.textContent = message
+  document.body.appendChild(toast)
+  setTimeout(() => toast.classList.add('toast-visible'), 10)
+  setTimeout(() => {
+    toast.classList.remove('toast-visible')
+    setTimeout(() => toast.remove(), 300)
+  }, 3000)
 }
 </script>
 </body>
-</html>`
-}
-
-export default app
+</html>
