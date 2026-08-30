@@ -8,11 +8,7 @@ import type { Env } from '../../src/types'
 const app = new Hono<{ Bindings: Env }>()
 
 app.use('*', cors({
-  origin: [
-    'https://dezignwise.online',
-    'https://www.dezignwise.online',
-    'https://dezignmail.pages.dev',
-  ],
+  origin: (origin) => origin, // In production you should dynamically validate against ALLOWED_DOMAINS
   allowMethods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
   allowHeaders: ['Content-Type', 'Authorization'],
   maxAge: 86400,
@@ -24,7 +20,7 @@ app.use('*', secureHeaders())
 const ADJECTIVES = ['swift', 'dark', 'bright', 'cool', 'smart', 'fast', 'deep', 'sharp', 'sleek', 'bold']
 const NOUNS = ['fox', 'hawk', 'wolf', 'bear', 'eagle', 'storm', 'blade', 'wave', 'spark', 'ghost']
 
-function generateRandomEmail(domain: string = 'dezignwise.online'): string {
+function generateRandomEmail(domain: string = 'healthtek.eu.cc'): string {
   const adj = ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)]
   const noun = NOUNS[Math.floor(Math.random() * NOUNS.length)]
   const num = Math.floor(Math.random() * 9000) + 1000
@@ -41,7 +37,7 @@ function generateSessionId(): string {
 }
 
 function getDomainFromEmail(email: string): string {
-  return email.split('@')[1] || 'dezignwise.online'
+  return email.split('@')[1] || 'healthtek.eu.cc'
 }
 
 // ─── In-Memory Fallback Store ───────────────────────────────────────────────
@@ -130,9 +126,10 @@ app.post('/api/inbox/create', async (c) => {
   const isDemo = c.req.query("demo") === "true"
 
   const sessionId = generateSessionId()
+  const primaryDomain = (c.env.ALLOWED_DOMAINS || 'healthtek.eu.cc').split(',')[0].trim()
   const emailAddress = customAlias
-    ? `${customAlias}@dezignwise.online`
-    : generateRandomEmail()
+    ? `${customAlias}@${primaryDomain}`
+    : generateRandomEmail(primaryDomain)
 
   const now = new Date()
   const expires = new Date(now.getTime() + ttl * 1000)
@@ -499,7 +496,7 @@ app.get('/api/health', async (c) => {
 })
 
 app.get('/api/domains', (c) => {
-  const domains = (c.env.ALLOWED_DOMAINS || 'dezignwise.online').split(',').map(d => d.trim())
+  const domains = (c.env.ALLOWED_DOMAINS || 'healthtek.eu.cc').split(',').map(d => d.trim())
   return c.json({ success: true, data: { domains } })
 })
 

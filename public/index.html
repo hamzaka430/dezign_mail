@@ -690,7 +690,7 @@
     <span>done right.</span>
   </h1>
   <p class="hero-subtitle">
-    Get a real-looking temporary inbox on dezignwise.online in seconds. Complete with MX, SPF, DKIM, and DMARC records.
+    Get a real-looking temporary inbox on <span class="domain-text">healthtek.eu.cc</span> in seconds. Complete with MX, SPF, DKIM, and DMARC records.
   </p>
 
   <!-- Inbox Generator Card -->
@@ -714,7 +714,7 @@
     <div class="inbox-label">Custom alias (optional)</div>
     <div class="custom-alias-row">
       <input type="text" class="text-input with-suffix" id="custom-alias" placeholder="your-name" maxlength="30">
-      <div class="text-input-suffix">@dezignwise.online</div>
+      <div class="text-input-suffix">@healthtek.eu.cc</div>
     </div>
 
     <div class="inbox-actions">
@@ -799,7 +799,7 @@
   <div class="card-grid">
     <!-- Spotlight card (gradient-violet) -->
     <div class="spotlight-card-violet">
-      <div class="spotlight-card-title">Real MX records on dezignwise.online</div>
+      <div class="spotlight-card-title">Real MX records on healthtek.eu.cc</div>
       <div class="spotlight-card-desc">
         Unlike most disposable services, Dezignmail uses a properly configured domain with
         SPF, DKIM, and DMARC records — meaning your temporary address passes most validation checks
@@ -815,7 +815,7 @@
     <div class="feature-card">
       <div class="feature-card-icon">🎯</div>
       <div class="feature-card-title">Custom alias</div>
-      <div class="feature-card-desc">Choose your own prefix like <code style="color:#0099ff">yourname@dezignwise.online</code> for a more convincing temporary address.</div>
+      <div class="feature-card-desc">Choose your own prefix like <code style="color:#0099ff">yourname@<span class="domain-text">healthtek.eu.cc</span></code> for a more convincing temporary address.</div>
     </div>
     <div class="feature-card">
       <div class="feature-card-icon">⏱</div>
@@ -864,7 +864,7 @@
   <div class="footer-inner">
     <div class="footer-brand">
       <div class="footer-brand-name">Dezignmail</div>
-      <div class="footer-brand-desc">Disposable email service on dezignwise.online. Built with Hono, Cloudflare Pages, and Neon PostgreSQL.</div>
+      <div class="footer-brand-desc">Disposable email service on <span class="domain-text">healthtek.eu.cc</span>. Built with Hono, Cloudflare Pages, and Neon PostgreSQL.</div>
     </div>
     <div class="footer-links">
       <h4>Product</h4>
@@ -892,7 +892,7 @@
     </div>
   </div>
   <div class="footer-bottom">
-    © 2024 Dezignmail. Powered by Cloudflare Pages · dezignwise.online
+    © 2024 Dezignmail. Powered by Cloudflare Pages · healthtek.eu.cc
   </div>
 </footer>
 
@@ -909,11 +909,23 @@ let state = {
   totalTtl: 600,
   messages: [],
   pollingInterval: null,
-  timerInterval: null
+  timerInterval: null,
+  primaryDomain: 'healthtek.eu.cc'
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('DOMContentLoaded', async () => {
+  try {
+    const res = await fetch('/api/domains')
+    const json = await res.json()
+    if (json.success && json.data.domains.length > 0) {
+      state.primaryDomain = json.data.domains[0]
+      // Update UI elements displaying the domain
+      document.querySelectorAll('.domain-text').forEach(el => el.textContent = state.primaryDomain)
+      document.querySelector('.text-input-suffix').textContent = '@' + state.primaryDomain
+    }
+  } catch(e) {}
+
   const savedInboxId = sessionStorage.getItem('dezignmail_inbox_id')
   const savedInboxAddress = sessionStorage.getItem('dezignmail_inbox_address')
   if (savedInboxId && savedInboxAddress) {
@@ -932,7 +944,7 @@ function generatePreviewEmail() {
   const adj = ['swift','dark','bright','cool','smart','fast','deep','sharp'][Math.floor(Math.random()*8)]
   const noun = ['fox','hawk','wolf','bear','eagle','storm','blade','wave'][Math.floor(Math.random()*8)]
   const num = Math.floor(Math.random() * 9000) + 1000
-  document.getElementById('current-email').textContent = adj+'.'+noun+'.'+num+'@dezignwise.online'
+  document.getElementById('current-email').textContent = adj+'.'+noun+'.'+num+'@'+state.primaryDomain
 }
 
 function updateAddressDisplay() {

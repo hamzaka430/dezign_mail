@@ -3,7 +3,7 @@ compatibility_date = "2024-09-23"
 pages_build_output_dir = "dist"
 
 [vars]
-ALLOWED_DOMAINS = "dezignwise.online"
+ALLOWED_DOMAINS = "healthtek.eu.cc"
 
 [[kv_namespaces]]
 binding = "DEZIGNMAIL_KV"

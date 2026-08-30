@@ -11,8 +11,8 @@ apt-get update && apt-get install -y postfix opendkim opendkim-tools mailutils c
 
 echo "Configuring Postfix main.cf..."
 cat << 'MAINCF' >> /etc/postfix/main.cf
-myhostname = mail.dezignwise.online
-mydomain = dezignwise.online
+myhostname = mail.healthtek.eu.cc
+mydomain = healthtek.eu.cc
 myorigin = $mydomain
 mydestination = $myhostname, localhost.$mydomain, localhost
 inet_interfaces = all
@@ -36,28 +36,28 @@ cp "$(dirname "$0")/dezignmail-pipe.sh" /usr/local/bin/dezignmail-pipe.sh
 chmod +x /usr/local/bin/dezignmail-pipe.sh
 
 echo "Generating DKIM keys..."
-mkdir -p /etc/opendkim/keys/dezignwise.online
-opendkim-genkey -b 2048 -d dezignwise.online -D /etc/opendkim/keys/dezignwise.online/ -s mail -v
-chown -R opendkim:opendkim /etc/opendkim/keys/dezignwise.online
+mkdir -p /etc/opendkim/keys/healthtek.eu.cc
+opendkim-genkey -b 2048 -d healthtek.eu.cc -D /etc/opendkim/keys/healthtek.eu.cc/ -s mail -v
+chown -R opendkim:opendkim /etc/opendkim/keys/healthtek.eu.cc
 
 echo "Generating DNS records instructions..."
 DNS_FILE="$(dirname "$0")/dns-records.txt"
-echo "=== DNS Records for dezignwise.online ===" > "$DNS_FILE"
+echo "=== DNS Records for healthtek.eu.cc ===" > "$DNS_FILE"
 echo "" >> "$DNS_FILE"
 echo "MX Record:" >> "$DNS_FILE"
-echo "  dezignwise.online  MX  10  mail.dezignwise.online" >> "$DNS_FILE"
+echo "  healthtek.eu.cc  MX  10  mail.healthtek.eu.cc" >> "$DNS_FILE"
 echo "" >> "$DNS_FILE"
 echo "A Record:" >> "$DNS_FILE"
-echo "  mail.dezignwise.online  A  <YOUR_VPS_IP>" >> "$DNS_FILE"
+echo "  mail.healthtek.eu.cc  A  <YOUR_VPS_IP>" >> "$DNS_FILE"
 echo "" >> "$DNS_FILE"
 echo "SPF Record (TXT):" >> "$DNS_FILE"
-echo "  dezignwise.online  TXT  \"v=spf1 ip4:<YOUR_VPS_IP> -all\"" >> "$DNS_FILE"
+echo "  healthtek.eu.cc  TXT  \"v=spf1 ip4:<YOUR_VPS_IP> -all\"" >> "$DNS_FILE"
 echo "" >> "$DNS_FILE"
 echo "DKIM Record (TXT) — copy from below:" >> "$DNS_FILE"
-cat /etc/opendkim/keys/dezignwise.online/mail.txt >> "$DNS_FILE"
+cat /etc/opendkim/keys/healthtek.eu.cc/mail.txt >> "$DNS_FILE"
 echo "" >> "$DNS_FILE"
 echo "DMARC Record (TXT):" >> "$DNS_FILE"
-echo "  _dmarc.dezignwise.online  TXT  \"v=DMARC1; p=none; rua=mailto:admin@dezignwise.online\"" >> "$DNS_FILE"
+echo "  _dmarc.healthtek.eu.cc  TXT  \"v=DMARC1; p=none; rua=mailto:admin@healthtek.eu.cc\"" >> "$DNS_FILE"
 
 echo "Setup complete! Please see $DNS_FILE for DNS records you need to create."
 echo "Restarting Postfix..."

@@ -1,6 +1,6 @@
 # Dezignmail — Temporary Email Service
 
-Real-looking disposable email on dezignwise.online
+Real-looking disposable email on healthtek.eu.cc
 
 ## One-Command Deploy
 
@@ -32,7 +32,7 @@ Proxy status: MX and TXT records = DNS only (grey cloud). A record for mail = DN
 
 ### 5. Test Email Delivery
 
-Send an email to any-address@dezignwise.online and check:
+Send an email to any-address@healthtek.eu.cc and check:
 GET https://dezignmail.pages.dev/api/health
 
 ## API Reference
