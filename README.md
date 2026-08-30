@@ -1,88 +1,51 @@
 # Dezignmail — Temporary Email Service
 
-**Real-looking disposable email on dezignwise.online**
+Real-looking disposable email on healthtek.eu.cc
 
-## Overview
-- **Name**: Dezignmail
-- **Goal**: Provide short-lived disposable email inboxes that bypass most disposable-email detection
-- **Domain**: dezignwise.online (with real MX, SPF, DKIM, DMARC records)
-- **Design**: Dark-canvas UI based on Framer design language (DESIGN-framer.md)
+## One-Command Deploy
 
-## Features Completed
-- ✅ Instant temporary inbox creation (no signup)
-- ✅ Custom alias support (`yourname@dezignwise.online`)
-- ✅ Configurable TTL (10 min / 1 hr / 24 hr)
-- ✅ Inbox extend (+1 hour)
-- ✅ Real-time polling (5s interval)
-- ✅ Email detail view (HTML + plain text)
-- ✅ Message delete
-- ✅ Inbox delete
-- ✅ REST API for external integrations
-- ✅ Postfix mail server setup script
-- ✅ DKIM/SPF/DMARC configuration
-- ✅ Neon PostgreSQL schema (D1 compatible)
-- ✅ Demo data pre-seeded
+npm run deploy
 
-## URLs
-- **Live Preview**: https://3000-i43txj3neqj6k9fhkz5nk-583b4d74.sandbox.novita.ai
-- **API Health**: https://3000-i43txj3neqj6k9fhkz5nk-583b4d74.sandbox.novita.ai/api/health
-- **Cloudflare Production**: https://dezignmail.pages.dev (after deploy)
-- **GitHub**: https://github.com/your-username/dezignmail
+## Required Setup
 
-## API Endpoints
+### 1. Cloudflare — Set Environment Variables
+
+wrangler secret put DATABASE_URL
+wrangler secret put POSTFIX_WEBHOOK_SECRET
+
+### 2. Neon DB Setup
+
+1. Create a project at neon.tech
+2. Create a database named `dezignmail`
+3. Run `scripts/schema.sql` in the Neon SQL editor
+4. Copy the connection string (pooled, HTTP mode) → set as DATABASE_URL
+
+### 3. DigitalOcean VPS — Postfix Setup
+
+ssh root@YOUR_VPS_IP
+bash scripts/setup-postfix.sh
+
+### 4. Cloudflare DNS Records
+
+Add all records from `scripts/dns-records.txt` in Cloudflare DNS dashboard.
+Proxy status: MX and TXT records = DNS only (grey cloud). A record for mail = DNS only.
+
+### 5. Test Email Delivery
+
+Send an email to any-address@healthtek.eu.cc and check:
+GET https://dezignmail.pages.dev/api/health
+
+## API Reference
 
 | Method | Path | Description |
 |--------|------|-------------|
-| POST | /api/inbox/create | Create new temporary inbox |
-| GET | /api/inbox/:id | Get session info & time left |
-| GET | /api/inbox/:id/messages | List all messages |
-| GET | /api/inbox/:id/messages/:msgId | Get single message (marks read) |
-| DELETE | /api/inbox/:id/messages/:msgId | Delete a message |
-| DELETE | /api/inbox/:id | Delete entire inbox |
-| POST | /api/inbox/:id/extend | Extend inbox TTL |
-| POST | /api/receive | Webhook for Postfix delivery |
+| POST | /api/inbox/create | Create new inbox |
+| GET | /api/inbox/:id | Get inbox info |
+| GET | /api/inbox/:id/messages | List messages |
+| GET | /api/inbox/:id/messages/:msgId | Get single message |
+| DELETE | /api/inbox/:id/messages/:msgId | Delete message |
+| DELETE | /api/inbox/:id | Delete inbox |
+| POST | /api/inbox/:id/extend | Extend by 1 hour |
+| POST | /api/receive | Postfix webhook (auth required) |
 | GET | /api/health | Health check |
 | GET | /api/domains | Available domains |
-
-## Data Architecture
-- **Sessions**: In-memory store (fallback) or Cloudflare D1 / Neon PostgreSQL
-- **Emails**: Keyed by inbox_address, auto-cleaned on expiry
-- **No persistent user data**: All data is ephemeral by design
-
-## Tech Stack
-- **Frontend**: Vanilla JS SPA, Framer-inspired dark UI, Inter font
-- **Backend**: Hono (TypeScript) on Cloudflare Pages / Workers
-- **Mail Server**: Postfix with catch-all + OpenDKIM (DigitalOcean VPS)
-- **Database**: Cloudflare D1 (optional) / Neon PostgreSQL (optional)
-- **Build**: Vite + @hono/vite-cloudflare-pages
-
-## Quick Start
-
-```bash
-npm install
-npm run build
-npm run dev:sandbox  # local dev with wrangler
-```
-
-## Deployment
-See `docs/DEPLOYMENT.md` for full DigitalOcean + Cloudflare Pages + DNS guide.
-
-### TL;DR Deploy
-```bash
-npm run build && npx wrangler pages deploy dist --project-name dezignmail
-```
-
-## Not Yet Implemented
-- Redis auto-expiry (TTL cleanup cron)
-- Attachment download support
-- Domain rotation (multiple domains)
-- Webhook secret auth (Postfix → API)
-- Admin dashboard
-- Email search / filter
-
-## Recommended Next Steps
-1. Deploy Postfix on DigitalOcean (`scripts/setup-postfix.sh`)
-2. Configure DNS records (`scripts/dns-records.txt`)
-3. Deploy to Cloudflare Pages (`npm run deploy`)
-4. Set up Neon DB for persistent storage
-5. Add webhook secret to secure `/api/receive`
