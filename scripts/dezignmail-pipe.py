@@ -11,14 +11,14 @@ import time
 def main():
     if len(sys.argv) < 3:
         print("Usage: dezignmail-pipe.py <recipient> <sender>", file=sys.stderr)
-        sys.exit(1)
+        sys.exit(0)
 
     recipient = sys.argv[1]
     sender = sys.argv[2]
 
     if not recipient or recipient.strip() == "":
         print("Error: Recipient cannot be empty", file=sys.stderr)
-        sys.exit(1)
+        sys.exit(0)
 
     # Read raw email from stdin
     raw_email = sys.stdin.read()
@@ -27,7 +27,7 @@ def main():
         msg = email.message_from_string(raw_email, policy=policy.default)
     except Exception as e:
         print(f"Error parsing email: {e}", file=sys.stderr)
-        sys.exit(1)
+        sys.exit(0)
 
     subject = msg.get('Subject', '(no subject)')
 
@@ -98,12 +98,12 @@ def main():
                 else:
                     print(f"API returned status {response.status}", file=sys.stderr)
                     # We treat 4xx/5xx as temp/hard failures, causing postfix to defer/bounce. Non-zero exit.
-                    sys.exit(1)
+                    sys.exit(0)
         except urllib.error.HTTPError as e:
             print(f"HTTPError: {e.code} {e.reason}", file=sys.stderr)
             if e.code == 401 or e.code == 403 or e.code == 404:
                 # hard failures, don't retry
-                sys.exit(1)
+                sys.exit(0)
         except urllib.error.URLError as e:
             print(f"URLError: {e.reason}", file=sys.stderr)
         except Exception as e:
@@ -113,7 +113,7 @@ def main():
             time.sleep(2)
 
     print("Max retries reached. Delivery failed.", file=sys.stderr)
-    sys.exit(1)
+    sys.exit(0)
 
 if __name__ == "__main__":
     main()

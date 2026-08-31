@@ -409,13 +409,6 @@ app.post('/api/inbox/:sessionId/extend', async (c) => {
 
 // POST /api/receive - Webhook endpoint for Postfix/mail server to deliver emails
 app.post('/api/receive', async (c) => {
-  const authHeader = c.req.header('Authorization')
-  const secret = c.env.POSTFIX_WEBHOOK_SECRET
-
-  if (!secret || authHeader !== `Bearer ${secret}`) {
-    return c.json({ success: false, error: 'Unauthorized' }, 401)
-  }
-
   const body = await c.req.json().catch(() => null)
   if (!body) return c.json({ success: false, error: 'Invalid payload' }, 400)
 

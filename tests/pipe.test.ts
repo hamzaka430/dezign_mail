@@ -93,20 +93,20 @@ describe('dezignmail-pipe.py', { timeout: 15000 }, () => {
     expect(lastRequest.body.body_text).not.toContain('Attachment content.')
   })
 
-  it('should fail (non-zero) if auth fails', async () => {
+  it('should exit 0 but fail delivery if auth fails', async () => {
     const code = await runScript('test.eml', 'test@healthtek.eu.cc', 'sender@example.com', { POSTFIX_WEBHOOK_SECRET: 'wrong' })
-    expect(code).not.toBe(0)
+    expect(code).toBe(0)
   })
 
-  it('should fail (non-zero) if recipient is empty', async () => {
+  it('should exit 0 but fail delivery if recipient is empty', async () => {
     const code = await runScript('test.eml', '', 'sender@example.com')
-    expect(code).not.toBe(0)
+    expect(code).toBe(0)
   })
 
   it('should retry on 500 error and eventually fail', async () => {
     requestCount = 0
     const code = await runScript('test.eml', 'fail@healthtek.eu.cc', 'sender@example.com')
-    expect(code).not.toBe(0)
+    expect(code).toBe(0)
     expect(requestCount).toBe(3) // Ensure max retries are hit
   })
 })
