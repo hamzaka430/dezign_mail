@@ -12,7 +12,7 @@ vi.mock('../src/db', () => ({
         if (values[0] === 'expired-session') return []
         return [{
           id: 'test-session',
-          address: 'test@healthtek.eu.cc',
+          address: 'test@example.com',
           created_at: new Date().toISOString(),
           expires_at: new Date(Date.now() + 3600000).toISOString(),
           is_active: true
@@ -22,7 +22,7 @@ vi.mock('../src/db', () => ({
         return [{
           id: 'msg-1',
           inbox_id: 'test-session',
-          inbox_address: 'test@healthtek.eu.cc',
+          inbox_address: 'test@example.com',
           from_address: 'sender@example.com',
           subject: 'Test Subject',
           body_html: '<p>Hi</p>',
@@ -32,13 +32,13 @@ vi.mock('../src/db', () => ({
         }]
       }
       if (query.includes('SELECT id FROM inboxes WHERE address = ?')) {
-         if (values[0] === 'not-found@healthtek.eu.cc') return []
+         if (values[0] === 'not-found@example.com') return []
          return [{id: 'test-session'}]
       }
       if (query.includes('SELECT * FROM messages WHERE id = ?')) {
          return [{
            id: 'msg-1',
-           inbox_address: 'test@healthtek.eu.cc',
+           inbox_address: 'test@example.com',
            is_read: false
          }]
       }
@@ -53,7 +53,7 @@ vi.mock('../src/db', () => ({
 
 describe('Backend API Routes', () => {
   const env: Env = {
-    ALLOWED_DOMAINS: 'healthtek.eu.cc',
+    ALLOWED_DOMAINS: 'example.com',
     POSTFIX_WEBHOOK_SECRET: 'super-secret-key',
     DATABASE_URL: 'postgres://mock:mock@mock.neon.tech/mock'
   }
@@ -63,7 +63,7 @@ describe('Backend API Routes', () => {
     expect(res.status).toBe(200)
     const json = await res.json() as any
     expect(json.success).toBe(true)
-    expect(json.data.domains).toContain('healthtek.eu.cc')
+    expect(json.data.domains).toContain('example.com')
   })
 
   it('GET /api/health should return ok', async () => {
@@ -82,7 +82,7 @@ describe('Backend API Routes', () => {
     expect(res.status).toBe(200)
     const json = await res.json() as any
     expect(json.success).toBe(true)
-    expect(json.data.email_address).toBe('my-alias@healthtek.eu.cc')
+    expect(json.data.email_address).toBe('my-alias@example.com')
     expect(json.data.session_id).toBeDefined()
   })
 
@@ -91,7 +91,7 @@ describe('Backend API Routes', () => {
     expect(res.status).toBe(200)
     const json = await res.json() as any
     expect(json.success).toBe(true)
-    expect(json.data.email_address).toBe('test@healthtek.eu.cc')
+    expect(json.data.email_address).toBe('test@example.com')
   })
 
   it('GET /api/inbox/:id should return 404 for unknown/expired session', async () => {
@@ -135,7 +135,7 @@ describe('Backend API Routes', () => {
 
   describe('POST /api/receive (Webhook)', () => {
     const payload = {
-      to: 'test@healthtek.eu.cc',
+      to: 'test@example.com',
       from: 'sender@example.com',
       subject: 'Hello',
       body_text: 'World'
@@ -173,7 +173,7 @@ describe('Backend API Routes', () => {
       const res = await app.request('/api/receive', {
         method: 'POST',
         headers: { 'Authorization': 'Bearer super-secret-key' },
-        body: JSON.stringify({ ...payload, to: 'not-found@healthtek.eu.cc' })
+        body: JSON.stringify({ ...payload, to: 'not-found@example.com' })
       }, { ...env })
       expect(res.status).toBe(404)
     })
@@ -181,7 +181,7 @@ describe('Backend API Routes', () => {
 
   describe('In-Memory Fallback and Edge Cases', () => {
     const memoryEnv = {
-      ALLOWED_DOMAINS: 'healthtek.eu.cc',
+      ALLOWED_DOMAINS: 'example.com',
       POSTFIX_WEBHOOK_SECRET: 'super-secret-key',
     } as Env // Omitting DATABASE_URL
 

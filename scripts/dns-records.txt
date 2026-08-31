@@ -1,11 +1,11 @@
-=== DNS Records for healthtek.eu.cc ===
+=== DNS Records for example.com ===
 MX Record:
-  healthtek.eu.cc  MX  10  mail.healthtek.eu.cc
+  example.com  MX  10  mail.example.com
 A Record:
-  mail.healthtek.eu.cc  A  <YOUR_VPS_IP>
+  mail.example.com  A  <YOUR_VPS_IP>
 SPF Record (TXT):
-  healthtek.eu.cc  TXT  "v=spf1 ip4:<YOUR_VPS_IP> -all"
+  example.com  TXT  "v=spf1 ip4:<YOUR_VPS_IP> -all"
 DKIM Record (TXT) — copy from below:
 (Run scripts/setup-postfix.sh on VPS to generate)
 DMARC Record (TXT):
-  _dmarc.healthtek.eu.cc  TXT  "v=DMARC1; p=none; rua=mailto:admin@healthtek.eu.cc"
+  _dmarc.example.com  TXT  "v=DMARC1; p=none; rua=mailto:admin@example.com"

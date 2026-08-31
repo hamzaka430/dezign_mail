@@ -51,6 +51,6 @@ describe('Frontend Logic (index.html)', () => {
     // The script block defines state globally
     // const state = (dom.window as any).state
     // expect(state).toBeDefined()
-    // expect(state.primaryDomain).toBe('healthtek.eu.cc') // Initial value before fetch
+    // expect(state.primaryDomain).toBe('example.com') // Initial value before fetch
   })
 })

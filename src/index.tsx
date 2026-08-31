@@ -20,7 +20,7 @@ app.use('*', secureHeaders())
 const ADJECTIVES = ['swift', 'dark', 'bright', 'cool', 'smart', 'fast', 'deep', 'sharp', 'sleek', 'bold']
 const NOUNS = ['fox', 'hawk', 'wolf', 'bear', 'eagle', 'storm', 'blade', 'wave', 'spark', 'ghost']
 
-function generateRandomEmail(domain: string = 'healthtek.eu.cc'): string {
+function generateRandomEmail(domain: string = 'example.com'): string {
   const adj = ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)]
   const noun = NOUNS[Math.floor(Math.random() * NOUNS.length)]
   const num = Math.floor(Math.random() * 9000) + 1000
@@ -37,7 +37,7 @@ function generateSessionId(): string {
 }
 
 function getDomainFromEmail(email: string): string {
-  return email.split('@')[1] || 'healthtek.eu.cc'
+  return email.split('@')[1] || 'example.com'
 }
 
 // ─── In-Memory Fallback Store ───────────────────────────────────────────────
@@ -126,7 +126,7 @@ app.post('/api/inbox/create', async (c) => {
   const isDemo = c.req.query("demo") === "true"
 
   const sessionId = generateSessionId()
-  const primaryDomain = (c.env.ALLOWED_DOMAINS || 'healthtek.eu.cc').split(',')[0].trim()
+  const primaryDomain = (c.env.ALLOWED_DOMAINS || 'example.com').split(',')[0].trim()
   const emailAddress = customAlias
     ? `${customAlias}@${primaryDomain}`
     : generateRandomEmail(primaryDomain)
@@ -489,7 +489,7 @@ app.get('/api/health', async (c) => {
 })
 
 app.get('/api/domains', (c) => {
-  const domains = (c.env.ALLOWED_DOMAINS || 'healthtek.eu.cc').split(',').map(d => d.trim())
+  const domains = (c.env.ALLOWED_DOMAINS || 'example.com').split(',').map(d => d.trim())
   return c.json({ success: true, data: { domains } })
 })
 

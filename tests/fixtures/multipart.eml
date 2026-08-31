@@ -1,5 +1,5 @@
 From: sender@example.com
-To: test@healthtek.eu.cc
+To: test@example.com
 Subject: Multipart Test
 Content-Type: multipart/alternative; boundary="boundary-string"
 

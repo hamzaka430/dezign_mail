@@ -11,8 +11,8 @@ apt-get update && apt-get install -y postfix opendkim opendkim-tools mailutils c
 
 echo "Configuring Postfix main.cf..."
 cat << 'MAINCF' >> /etc/postfix/main.cf
-myhostname = mail.healthtek.eu.cc
-mydomain = healthtek.eu.cc
+myhostname = mail.example.com
+mydomain = example.com
 myorigin = $mydomain
 mydestination = $myhostname, localhost.$mydomain, localhost
 inet_interfaces = all
@@ -36,28 +36,28 @@ cp "$(dirname "$0")/dezignmail-pipe.sh" /usr/local/bin/dezignmail-pipe.sh
 chmod +x /usr/local/bin/dezignmail-pipe.sh
 
 echo "Generating DKIM keys..."
-mkdir -p /etc/opendkim/keys/healthtek.eu.cc
-opendkim-genkey -b 2048 -d healthtek.eu.cc -D /etc/opendkim/keys/healthtek.eu.cc/ -s mail -v
-chown -R opendkim:opendkim /etc/opendkim/keys/healthtek.eu.cc
+mkdir -p /etc/opendkim/keys/example.com
+opendkim-genkey -b 2048 -d example.com -D /etc/opendkim/keys/example.com/ -s mail -v
+chown -R opendkim:opendkim /etc/opendkim/keys/example.com
 
 echo "Generating DNS records instructions..."
 DNS_FILE="$(dirname "$0")/dns-records.txt"
-echo "=== DNS Records for healthtek.eu.cc ===" > "$DNS_FILE"
+echo "=== DNS Records for example.com ===" > "$DNS_FILE"
 echo "" >> "$DNS_FILE"
 echo "MX Record:" >> "$DNS_FILE"
-echo "  healthtek.eu.cc  MX  10  mail.healthtek.eu.cc" >> "$DNS_FILE"
+echo "  example.com  MX  10  mail.example.com" >> "$DNS_FILE"
 echo "" >> "$DNS_FILE"
 echo "A Record:" >> "$DNS_FILE"
-echo "  mail.healthtek.eu.cc  A  <YOUR_VPS_IP>" >> "$DNS_FILE"
+echo "  mail.example.com  A  <YOUR_VPS_IP>" >> "$DNS_FILE"
 echo "" >> "$DNS_FILE"
 echo "SPF Record (TXT):" >> "$DNS_FILE"
-echo "  healthtek.eu.cc  TXT  \"v=spf1 ip4:<YOUR_VPS_IP> -all\"" >> "$DNS_FILE"
+echo "  example.com  TXT  \"v=spf1 ip4:<YOUR_VPS_IP> -all\"" >> "$DNS_FILE"
 echo "" >> "$DNS_FILE"
 echo "DKIM Record (TXT) — copy from below:" >> "$DNS_FILE"
-cat /etc/opendkim/keys/healthtek.eu.cc/mail.txt >> "$DNS_FILE"
+cat /etc/opendkim/keys/example.com/mail.txt >> "$DNS_FILE"
 echo "" >> "$DNS_FILE"
 echo "DMARC Record (TXT):" >> "$DNS_FILE"
-echo "  _dmarc.healthtek.eu.cc  TXT  \"v=DMARC1; p=none; rua=mailto:admin@healthtek.eu.cc\"" >> "$DNS_FILE"
+echo "  _dmarc.example.com  TXT  \"v=DMARC1; p=none; rua=mailto:admin@example.com\"" >> "$DNS_FILE"
 
 echo "Setup complete! Please see $DNS_FILE for DNS records you need to create."
 echo "Restarting Postfix..."

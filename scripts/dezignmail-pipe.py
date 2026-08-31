@@ -8,16 +8,25 @@ import urllib.request
 import urllib.error
 import time
 
+
+def log_message(level, msg):
+    log_file = os.environ.get("DEZIGNMAIL_LOG", "/var/log/dezignmail-pipe.log")
+    try:
+        with open(log_file, "a") as f:
+            f.write(f"{level}: {msg}\n")
+    except Exception:
+        pass
+
 def main():
     if len(sys.argv) < 3:
-        print("Usage: dezignmail-pipe.py <recipient> <sender>", file=sys.stderr)
+        log_message("ERROR", "Usage: dezignmail-pipe.py <recipient> <sender>")
         sys.exit(0)
 
     recipient = sys.argv[1]
     sender = sys.argv[2]
 
     if not recipient or recipient.strip() == "":
-        print("Error: Recipient cannot be empty", file=sys.stderr)
+        log_message("ERROR", "Recipient cannot be empty")
         sys.exit(0)
 
     # Read raw email from stdin
@@ -26,7 +35,7 @@ def main():
     try:
         msg = email.message_from_string(raw_email, policy=policy.default)
     except Exception as e:
-        print(f"Error parsing email: {e}", file=sys.stderr)
+        log_message("ERROR", f"Error parsing email: {e}")
         sys.exit(0)
 
     subject = msg.get('Subject', '(no subject)')
@@ -93,26 +102,26 @@ def main():
             # Bug fix: use the returned response object
             with urllib.request.urlopen(req, timeout=10) as response:
                 if response.status in (200, 201, 202):
-                    print("Successfully delivered to API")
+                    log_message("SUCCESS", "Delivered to API")
                     sys.exit(0)
                 else:
-                    print(f"API returned status {response.status}", file=sys.stderr)
+                    log_message("ERROR", f"API returned status {response.status}")
                     # We treat 4xx/5xx as temp/hard failures, causing postfix to defer/bounce. Non-zero exit.
                     sys.exit(0)
         except urllib.error.HTTPError as e:
-            print(f"HTTPError: {e.code} {e.reason}", file=sys.stderr)
+            log_message("ERROR", f"HTTPError: {e.code} {e.reason}")
             if e.code == 401 or e.code == 403 or e.code == 404:
                 # hard failures, don't retry
                 sys.exit(0)
         except urllib.error.URLError as e:
-            print(f"URLError: {e.reason}", file=sys.stderr)
+            log_message("ERROR", f"URLError: {e.reason}")
         except Exception as e:
-            print(f"Unexpected error: {e}", file=sys.stderr)
+            log_message("ERROR", f"Unexpected error: {e}")
 
         if attempt < max_retries - 1:
             time.sleep(2)
 
-    print("Max retries reached. Delivery failed.", file=sys.stderr)
+    log_message("ERROR", "Max retries reached. Delivery failed.")
     sys.exit(0)
 
 if __name__ == "__main__":
