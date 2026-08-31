@@ -1,0 +1,15 @@
+From: sender@example.com
+To: test@healthtek.eu.cc
+Subject: Attachment Test
+Content-Type: multipart/mixed; boundary="boundary-string"
+
+--boundary-string
+Content-Type: text/plain; charset="utf-8"
+
+Check out this attachment.
+--boundary-string
+Content-Type: text/plain; name="test.txt"
+Content-Disposition: attachment; filename="test.txt"
+
+Attachment content.
+--boundary-string--

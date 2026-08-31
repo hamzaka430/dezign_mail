@@ -10,18 +10,25 @@
     "preview": "wrangler pages dev dist",
     "deploy": "vite build && wrangler pages deploy dist --project-name dezignmail",
     "cf-typegen": "wrangler types --env-interface CloudflareBindings",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",
     "hono": "^4.7.11"
   },
   "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.22.0",
     "@cloudflare/workers-types": "^4.20250705.0",
     "@hono/vite-cloudflare-pages": "^0.4.2",
     "@types/node": "^26.2.0",
+    "@vitest/coverage-v8": "^4.1.11",
+    "jsdom": "^29.1.1",
+    "node-fetch": "^3.3.2",
     "typescript": "^5.8.3",
     "vite": "^5.4.19",
+    "vitest": "^4.1.11",
     "wrangler": "^3.78.0"
   },
   "type": "module"

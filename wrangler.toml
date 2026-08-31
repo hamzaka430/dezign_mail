@@ -4,10 +4,3 @@ pages_build_output_dir = "dist"
 
 [vars]
 ALLOWED_DOMAINS = "healthtek.eu.cc"
-
-[[kv_namespaces]]
-binding = "DEZIGNMAIL_KV"
-id = "PLACEHOLDER_KV_ID"
-preview_id = "PLACEHOLDER_KV_PREVIEW_ID"
-[triggers]
-crons = ["*/10 * * * *"]

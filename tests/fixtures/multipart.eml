@@ -1,0 +1,14 @@
+From: sender@example.com
+To: test@healthtek.eu.cc
+Subject: Multipart Test
+Content-Type: multipart/alternative; boundary="boundary-string"
+
+--boundary-string
+Content-Type: text/plain; charset="utf-8"
+
+Text version.
+--boundary-string
+Content-Type: text/html; charset="utf-8"
+
+<p>HTML version.</p>
+--boundary-string--

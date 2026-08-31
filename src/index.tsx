@@ -2,8 +2,8 @@ import { Hono } from 'hono'
 import { handle } from 'hono/cloudflare-pages'
 import { cors } from 'hono/cors'
 import { secureHeaders } from 'hono/secure-headers'
-import { getDb } from '../../src/db'
-import type { Env } from '../../src/types'
+import { getDb } from './db'
+import type { Env } from './types'
 
 const app = new Hono<{ Bindings: Env }>()
 
@@ -500,4 +500,4 @@ app.get('/api/domains', (c) => {
   return c.json({ success: true, data: { domains } })
 })
 
-export const onRequest = handle(app)
+export default app

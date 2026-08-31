@@ -5,7 +5,7 @@ TO="$1"
 FROM="$2"
 SUBJECT="$3"
 BODY=$(cat)
-API_URL="https://dezignmail.pages.dev/api/receive"
+API_URL="${DEZIGNMAIL_API_URL:-https://dezignmail.pages.dev/api/receive}"
 SECRET="${POSTFIX_WEBHOOK_SECRET}"
 
 PAYLOAD=$(python3 -c "
