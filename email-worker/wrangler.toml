@@ -1,0 +1,19 @@
+name = "dezignmail-email"
+compatibility_date = "2024-09-23"
+main = "src/index.ts"
+
+# ─── Environment Variables ────────────────────────────────────────────────────
+[vars]
+ALLOWED_DOMAINS     = "healthtek.eu.cc"
+HOURS_TO_DELETE     = 3
+
+# ─── Cloudflare D1 (same database as dezignmail Pages app) ───────────────────
+[[d1_databases]]
+binding       = "D1"
+database_name = "dezignmail-d1"
+database_id   = "feedd209-0483-448c-b78c-7af3f46abf64"
+
+# ─── Cloudflare R2 (same bucket as dezignmail Pages app) ─────────────────────
+[[r2_buckets]]
+binding     = "R2"
+bucket_name = "dezignmail-attachments"
