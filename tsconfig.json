@@ -10,6 +10,6 @@
     "types": ["@cloudflare/workers-types"],
     "lib": ["ES2020", "DOM"]
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "functions/**/*", "vite.config.ts"],
   "exclude": ["node_modules", "dist"]
 }
