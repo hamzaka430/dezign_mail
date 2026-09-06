@@ -4,7 +4,7 @@ pages_build_output_dir = "dist"
 
 # ─── Environment Variables ────────────────────────────────────────────────────
 [vars]
-ALLOWED_DOMAINS     = "healthtek.eu.cc"
+ALLOWED_DOMAINS     = "healthtek.eu.cc,dezignmail.eu.cc,dezignwisemail.eu.cc"
 HOURS_TO_DELETE     = 3
 TELEGRAM_LOG_ENABLE = false
 

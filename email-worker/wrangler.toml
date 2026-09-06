@@ -4,7 +4,7 @@ main = "src/index.ts"
 
 # ─── Environment Variables ────────────────────────────────────────────────────
 [vars]
-ALLOWED_DOMAINS     = "healthtek.eu.cc"
+ALLOWED_DOMAINS     = "healthtek.eu.cc,dezignmail.eu.cc,dezignwisemail.eu.cc"
 HOURS_TO_DELETE     = 3
 
 # ─── Cloudflare D1 (same database as dezignmail Pages app) ───────────────────
