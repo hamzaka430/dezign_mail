@@ -1,6 +1,6 @@
 # Dezignmail
 
-**Professional disposable email service by [Dezignwise](https://dezignwise.com)**
+**Professional disposable email service by [Dezignwise](https://dezignwise.eu.cc)**
 
 A production-ready, SaaS-grade temporary email service built entirely on Cloudflare's edge infrastructure — no VPS, no traditional servers, no maintenance overhead.
 
@@ -318,7 +318,7 @@ npm run r2:create      # Create R2 bucket
 
 ## License
 
-MIT — Built by [Dezignwise](https://dezignwise.com)
+MIT — Built by [Dezignwise](https://dezignwise.eu.cc)
 
 ---
 
@@ -326,5 +326,5 @@ MIT — Built by [Dezignwise](https://dezignwise.com)
 
 - **Website:** [dezignmail.eu.cc](https://dezignmail.eu.cc)
 - **Company:** Dezignwise
-- **Email:** hello@dezignwise.com
-- **Abuse:** abuse@dezignwise.com
+- **Email:** hello@dezignwise.eu.cc
+- **Abuse:** abuse@dezignwise.eu.cc
