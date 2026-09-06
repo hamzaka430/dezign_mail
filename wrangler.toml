@@ -4,19 +4,17 @@ pages_build_output_dir = "dist"
 
 # ─── Environment Variables ────────────────────────────────────────────────────
 [vars]
-ALLOWED_DOMAINS    = "healthtek.eu.cc"
-HOURS_TO_DELETE    = 3
+ALLOWED_DOMAINS     = "healthtek.eu.cc"
+HOURS_TO_DELETE     = 3
 TELEGRAM_LOG_ENABLE = false
 
 # ─── Cloudflare D1 (SQLite email store) ──────────────────────────────────────
-# Auto-provisioned by hosted deploy pipeline; database_id is rewritten.
 [[d1_databases]]
 binding       = "D1"
 database_name = "dezignmail-d1"
-database_id   = "00000000-0000-0000-0000-000000000000"
+database_id   = "feedd209-0483-448c-b78c-7af3f46abf64"
 
 # ─── Cloudflare R2 (attachment storage) ──────────────────────────────────────
-# Auto-provisioned by hosted deploy pipeline.
 [[r2_buckets]]
 binding     = "R2"
 bucket_name = "dezignmail-attachments"
