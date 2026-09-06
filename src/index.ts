@@ -58,14 +58,15 @@ function isDomainAllowed(address: string, env: Env): boolean {
   return getAllowedDomains(env).includes(domain)
 }
 
-function generateAddress(env: Env): string {
+function generateAddress(env: Env, domain?: string): string {
   const adj = ['swift', 'dark', 'bright', 'cool', 'smart', 'fast', 'deep', 'sharp', 'sleek', 'bold']
   const noun = ['fox', 'hawk', 'wolf', 'bear', 'eagle', 'storm', 'blade', 'wave', 'spark', 'ghost']
   const a = adj[Math.floor(Math.random() * adj.length)]
   const n = noun[Math.floor(Math.random() * noun.length)]
   const num = Math.floor(Math.random() * 9000) + 1000
-  const domain = getAllowedDomains(env)[0]
-  return `${a}.${n}.${num}@${domain}`
+  const allowedDomains = getAllowedDomains(env)
+  const selectedDomain = (domain && allowedDomains.includes(domain)) ? domain : allowedDomains[0]
+  return `${a}.${n}.${num}@${selectedDomain}`
 }
 
 // ─── API Routes ───────────────────────────────────────────────────────────────
@@ -191,15 +192,20 @@ app.delete('/api/attachments/:attachmentId', async (c) => {
 app.post('/api/inbox/create', async (c) => {
   const body = await c.req.json().catch(() => ({})) as any
   const alias = (body.custom_alias as string | undefined)?.trim()
-  const primaryDomain = getAllowedDomains(c.env)[0]
+  const requestedDomain = (body.domain as string | undefined)?.trim()
+  const allowedDomains = getAllowedDomains(c.env)
+  // Validate requested domain, fallback to first allowed domain
+  const domain = (requestedDomain && allowedDomains.includes(requestedDomain))
+    ? requestedDomain
+    : allowedDomains[0]
   let address: string
   if (alias) {
     if (!/^[a-z0-9._-]{1,60}$/i.test(alias)) {
       return c.json({ success: false, error: 'Invalid alias. Use only letters, numbers, dots, hyphens.' }, 400)
     }
-    address = `${alias.toLowerCase()}@${primaryDomain}`
+    address = `${alias.toLowerCase()}@${domain}`
   } else {
-    address = generateAddress(c.env)
+    address = generateAddress(c.env, domain)
   }
   return c.json({
     success: true,

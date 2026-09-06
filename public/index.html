@@ -309,6 +309,22 @@
       font-size: 14px;
     }
     .text-input.with-suffix { border-radius: var(--rounded-md) 0 0 var(--rounded-md); border-right: none; }
+    .domain-select {
+      background: var(--color-surface-2);
+      color: var(--color-ink);
+      border: 1px solid var(--color-hairline);
+      border-left: none;
+      border-radius: 0 var(--rounded-md) var(--rounded-md) 0;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-family: inherit;
+      outline: none;
+      cursor: pointer;
+      transition: border-color 0.15s;
+      min-width: 0;
+    }
+    .domain-select:focus { border-color: var(--color-accent-blue); }
+    .domain-select option { background: var(--color-surface-1); }
     .inbox-actions { display: flex; gap: var(--spacing-sm); }
     .timer-bar-wrapper {
       margin-top: var(--spacing-lg);
@@ -710,11 +726,13 @@
       <button class="ttl-btn" data-ttl="86400" onclick="selectTTL(this, 86400)">24 hours</button>
     </div>
 
-    <!-- Custom alias -->
+    <!-- Custom alias + Domain selector -->
     <div class="inbox-label">Custom alias (optional)</div>
     <div class="custom-alias-row">
-      <input type="text" class="text-input with-suffix" id="custom-alias" placeholder="your-name" maxlength="30">
-      <div class="text-input-suffix">@healthtek.eu.cc</div>
+      <input type="text" class="text-input with-suffix" id="custom-alias" placeholder="your-name" maxlength="30" oninput="updatePreviewEmail()">
+      <select class="domain-select" id="domain-select" onchange="onDomainChange()">
+        <option value="healthtek.eu.cc">@healthtek.eu.cc</option>
+      </select>
     </div>
 
     <div class="inbox-actions">
@@ -903,7 +921,8 @@ let state = {
   emailAddress: null,   // address IS the session ID in the new model
   messages: [],
   pollingInterval: null,
-  primaryDomain: 'healthtek.eu.cc'
+  primaryDomain: 'healthtek.eu.cc',
+  availableDomains: ['healthtek.eu.cc']
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────
@@ -913,9 +932,13 @@ window.addEventListener('DOMContentLoaded', async () => {
     const json = await res.json()
     const domains = json.result || json.data?.domains || []
     if (json.success && domains.length > 0) {
+      state.availableDomains = domains
       state.primaryDomain = domains[0]
+      // Populate domain dropdown
+      const sel = document.getElementById('domain-select')
+      sel.innerHTML = domains.map(d => `<option value="${d}">@${d}</option>`).join('')
+      // Update domain-text spans
       document.querySelectorAll('.domain-text').forEach(el => el.textContent = state.primaryDomain)
-      document.querySelector('.text-input-suffix').textContent = '@' + state.primaryDomain
     }
   } catch(e) {}
 
@@ -935,11 +958,33 @@ window.addEventListener('DOMContentLoaded', async () => {
 })
 
 // ── Helpers ───────────────────────────────────────────────────────────────
+function getSelectedDomain() {
+  const sel = document.getElementById('domain-select')
+  return sel ? sel.value : state.primaryDomain
+}
+
 function generatePreviewEmail() {
   const adj = ['swift','dark','bright','cool','smart','fast','deep','sharp'][Math.floor(Math.random()*8)]
   const noun = ['fox','hawk','wolf','bear','eagle','storm','blade','wave'][Math.floor(Math.random()*8)]
   const num = Math.floor(Math.random() * 9000) + 1000
-  document.getElementById('current-email').textContent = adj+'.'+noun+'.'+num+'@'+state.primaryDomain
+  document.getElementById('current-email').textContent = adj+'.'+noun+'.'+num+'@'+getSelectedDomain()
+}
+
+function updatePreviewEmail() {
+  if (state.emailAddress) return // already created, don't overwrite
+  const alias = document.getElementById('custom-alias').value.trim()
+  const domain = getSelectedDomain()
+  if (alias) {
+    document.getElementById('current-email').textContent = alias + '@' + domain
+  } else {
+    generatePreviewEmail()
+  }
+}
+
+function onDomainChange() {
+  state.primaryDomain = getSelectedDomain()
+  document.querySelectorAll('.domain-text').forEach(el => el.textContent = state.primaryDomain)
+  if (!state.emailAddress) updatePreviewEmail()
 }
 
 function updateAddressDisplay() {
@@ -972,10 +1017,11 @@ async function createInbox() {
   btn.innerHTML = '<span class="spinner"></span>'
   const alias = document.getElementById('custom-alias').value.trim()
   try {
+    const domain = getSelectedDomain()
     const res = await fetch('/api/inbox/create', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ custom_alias: alias || undefined })
+      body: JSON.stringify({ custom_alias: alias || undefined, domain: domain })
     })
     const json = await res.json()
     if (!res.ok || !json.success) throw new Error(json.error || 'Failed')
