@@ -1,7 +1,3 @@
-import { neon } from '@neondatabase/serverless'
-
-export function getDb(databaseUrl: string) {
-  return neon(databaseUrl)
-}
-
-export type NeonQueryFunction = ReturnType<typeof neon>
+// This file is kept for backwards compatibility
+// The project now uses Cloudflare D1 directly — see src/database/
+export {}

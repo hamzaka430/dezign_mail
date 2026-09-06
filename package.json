@@ -1,7 +1,7 @@
 {
   "name": "dezignmail",
-  "version": "1.0.0",
-  "description": "Dezignmail - Temporary Email Service",
+  "version": "2.0.0",
+  "description": "Dezignmail - Temporary Email Service (Cloudflare Pages + D1 + R2 + Email Routing)",
   "private": true,
   "scripts": {
     "dev": "wrangler pages dev dist --compatibility-date=2024-09-23",
@@ -10,11 +10,16 @@
     "preview": "wrangler pages dev dist",
     "deploy": "vite build && wrangler pages deploy dist --project-name dezignmail",
     "cf-typegen": "wrangler types --env-interface CloudflareBindings",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "db:create": "wrangler d1 create dezignmail-d1",
+    "db:schema": "wrangler d1 execute dezignmail-d1 --file sql/schema.sql --remote",
+    "db:indexes": "wrangler d1 execute dezignmail-d1 --file sql/indexes.sql --remote",
+    "r2:create": "wrangler r2 bucket create dezignmail-attachments",
+    "r2:create-preview": "wrangler r2 bucket create dezignmail-attachments-preview"
   },
   "dependencies": {
-    "@neondatabase/serverless": "^1.1.0",
-    "hono": "^4.7.11"
+    "hono": "^4.7.11",
+    "postal-mime": "^2.7.6"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250705.0",

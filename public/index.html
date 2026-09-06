@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dezignmail — Disposable Email</title>
-  <meta name="description" content="Free temporary email service. Get a disposable inbox in seconds. No signup required.">
+  <meta name="description" content="Free temporary email service powered by Cloudflare Email Routing. Get a disposable inbox in seconds. No signup required.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -801,9 +801,7 @@
     <div class="spotlight-card-violet">
       <div class="spotlight-card-title">Real MX records on healthtek.eu.cc</div>
       <div class="spotlight-card-desc">
-        Unlike most disposable services, Dezignmail uses a properly configured domain with
-        SPF, DKIM, and DMARC records — meaning your temporary address passes most validation checks
-        and is far less likely to be blocked outright.
+        Unlike most disposable services, Dezignmail uses Cloudflare Email Routing with SPF, DKIM, and DMARC — no VPS required. Your temporary address passes most validation checks and is far less likely to be blocked.
       </div>
     </div>
 
@@ -838,23 +836,23 @@
   <div class="card-grid">
     <div class="feature-card">
       <div class="feature-card-icon">1</div>
-      <div class="feature-card-title">Configure DNS</div>
-      <div class="feature-card-desc">Add MX, SPF, DKIM, and DMARC records to your domain. Point MX to your Postfix VPS IP.</div>
+      <div class="feature-card-title">Enable Email Routing</div>
+      <div class="feature-card-desc">Go to your Cloudflare dashboard → Email → Email Routing. Enable it and add a catch-all rule pointing to the Worker.</div>
     </div>
     <div class="feature-card">
       <div class="feature-card-icon">2</div>
-      <div class="feature-card-title">Setup Postfix</div>
-      <div class="feature-card-desc">Install Postfix with catch-all mailbox. Configure it to pipe all incoming mail to the webhook API.</div>
+      <div class="feature-card-title">Create D1 + R2</div>
+      <div class="feature-card-desc">Run <code style="color:#0099ff">npm run db:create</code> and <code style="color:#0099ff">npm run r2:create</code>. Update IDs in <code style="color:#0099ff">wrangler.toml</code>.</div>
     </div>
     <div class="feature-card">
       <div class="feature-card-icon">3</div>
-      <div class="feature-card-title">Deploy Backend</div>
-      <div class="feature-card-desc">Deploy this Cloudflare Pages app. Connect Neon PostgreSQL for persistent storage.</div>
+      <div class="feature-card-title">Apply Schema</div>
+      <div class="feature-card-desc">Run <code style="color:#0099ff">npm run db:schema</code> then <code style="color:#0099ff">npm run db:indexes</code> to create the emails and attachments tables.</div>
     </div>
     <div class="feature-card">
       <div class="feature-card-icon">4</div>
-      <div class="feature-card-title">Done</div>
-      <div class="feature-card-desc">Share your inbox URL. Emails arrive in seconds via the Postfix → API pipeline.</div>
+      <div class="feature-card-title">Deploy</div>
+      <div class="feature-card-desc">Run <code style="color:#0099ff">npm run deploy</code>. Emails arrive in seconds via Cloudflare Email Routing — no VPS needed.</div>
     </div>
   </div>
 </section>
@@ -892,7 +890,7 @@
     </div>
   </div>
   <div class="footer-bottom">
-    © 2024 Dezignmail. Powered by Cloudflare Pages · healthtek.eu.cc
+    © 2025 Dezignmail. Powered by Cloudflare Pages + Email Routing · healthtek.eu.cc
   </div>
 </footer>
 
@@ -902,14 +900,9 @@
 <script>
 // ── State ─────────────────────────────────────────────────────────────────
 let state = {
-  sessionId: null,
-  emailAddress: null,
-  expiresAt: null,
-  ttlSeconds: 600,
-  totalTtl: 600,
+  emailAddress: null,   // address IS the session ID in the new model
   messages: [],
   pollingInterval: null,
-  timerInterval: null,
   primaryDomain: 'healthtek.eu.cc'
 }
 
@@ -918,22 +911,24 @@ window.addEventListener('DOMContentLoaded', async () => {
   try {
     const res = await fetch('/api/domains')
     const json = await res.json()
-    if (json.success && json.data.domains.length > 0) {
-      state.primaryDomain = json.data.domains[0]
-      // Update UI elements displaying the domain
+    const domains = json.result || json.data?.domains || []
+    if (json.success && domains.length > 0) {
+      state.primaryDomain = domains[0]
       document.querySelectorAll('.domain-text').forEach(el => el.textContent = state.primaryDomain)
       document.querySelector('.text-input-suffix').textContent = '@' + state.primaryDomain
     }
   } catch(e) {}
 
-  const savedInboxId = sessionStorage.getItem('dezignmail_inbox_id')
-  const savedInboxAddress = sessionStorage.getItem('dezignmail_inbox_address')
-  if (savedInboxId && savedInboxAddress) {
-      state.sessionId = savedInboxId
-      state.emailAddress = savedInboxAddress
-      updateAddressDisplay()
-      document.getElementById('view-btn').style.display = 'inline-flex'
-      viewInbox()
+  // No TTL in new model — hide timer UI
+  const tw = document.getElementById('timer-wrapper')
+  if (tw) tw.style.display = 'none'
+
+  const savedAddress = sessionStorage.getItem('dezignmail_inbox_address')
+  if (savedAddress) {
+    state.emailAddress = savedAddress
+    updateAddressDisplay()
+    document.getElementById('view-btn').style.display = 'inline-flex'
+    viewInbox()
   } else {
     generatePreviewEmail()
   }
@@ -948,63 +943,47 @@ function generatePreviewEmail() {
 }
 
 function updateAddressDisplay() {
-  if (state.emailAddress) {
-    document.getElementById('current-email').textContent = state.emailAddress
-  }
+  if (state.emailAddress) document.getElementById('current-email').textContent = state.emailAddress
 }
 
+// TTL buttons kept for UI compatibility but have no backend effect
 function selectTTL(btn, ttl) {
   document.querySelectorAll('.ttl-btn').forEach(b => b.classList.remove('active'))
   btn.classList.add('active')
-  state.ttlSeconds = ttl
 }
 
 function scrollToInbox() {
   document.getElementById('inbox-generator').scrollIntoView({ behavior: 'smooth' })
 }
 
-function showExpiredState() {
-    showToast('Inbox expired or deleted.', 'error')
-    state.sessionId = null; state.emailAddress = null; state.expiresAt = null
-    sessionStorage.removeItem('dezignmail_inbox_id')
-    sessionStorage.removeItem('dezignmail_inbox_address')
-    document.getElementById('inbox-section').classList.remove('visible')
-    document.getElementById('view-btn').style.display = 'none'
-    document.getElementById('timer-wrapper').classList.remove('visible')
-    generatePreviewEmail()
+function resetToHome() {
+  state.emailAddress = null
+  state.messages = []
+  stopPolling()
+  sessionStorage.removeItem('dezignmail_inbox_address')
+  document.getElementById('inbox-section').classList.remove('visible')
+  document.getElementById('view-btn').style.display = 'none'
+  generatePreviewEmail()
 }
 
 // ── Create Inbox ──────────────────────────────────────────────────────────
 async function createInbox() {
   const btn = document.getElementById('create-btn-text')
   btn.innerHTML = '<span class="spinner"></span>'
-
   const alias = document.getElementById('custom-alias').value.trim()
   try {
     const res = await fetch('/api/inbox/create', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        ttl: state.ttlSeconds,
-        custom_alias: alias || undefined
-      })
+      body: JSON.stringify({ custom_alias: alias || undefined })
     })
     const json = await res.json()
     if (!res.ok || !json.success) throw new Error(json.error || 'Failed')
-    const data = json.data;
-
-    state.sessionId = data.session_id
-    state.emailAddress = data.email_address
-    state.expiresAt = data.expires_at
-    state.totalTtl = data.ttl_seconds
-
-    sessionStorage.setItem('dezignmail_inbox_id', state.sessionId)
+    state.emailAddress = json.data.email_address
     sessionStorage.setItem('dezignmail_inbox_address', state.emailAddress)
-
     updateAddressDisplay()
     document.getElementById('view-btn').style.display = 'inline-flex'
-    startTimer()
-    showToast('Inbox created! ✓', 'success')
+    showToast('Inbox ready! ✓', 'success')
   } catch(e) {
     showToast(e.message, 'error')
   } finally {
@@ -1012,66 +991,21 @@ async function createInbox() {
   }
 }
 
-// ── Timer ─────────────────────────────────────────────────────────────────
-function startTimer() {
-  document.getElementById('timer-wrapper').classList.add('visible')
-  if (state.timerInterval) clearInterval(state.timerInterval)
-  updateTimer()
-  state.timerInterval = setInterval(updateTimer, 1000)
-}
-
-function updateTimer() {
-  if (!state.expiresAt) return
-  const now = new Date()
-  const exp = new Date(state.expiresAt)
-  const left = Math.max(0, Math.floor((exp - now) / 1000))
-  const pct = Math.min(100, (left / state.totalTtl) * 100)
-
-  const h = Math.floor(left / 3600)
-  const m = Math.floor((left % 3600) / 60)
-  const s = left % 60
-  let txt = ''
-  if (h > 0) txt += h+'h '
-  if (m > 0 || h > 0) txt += m+'m '
-  txt += s+'s'
-
-  document.getElementById('timer-text').textContent = left === 0 ? 'Expired' : txt
-  document.getElementById('timer-fill').style.width = pct + '%'
-  document.getElementById('timer-fill').style.background = left < 60 ? '#ef4444' : '#0099ff'
-
-  if (left === 0) clearInterval(state.timerInterval)
-}
-
 // ── View Inbox ────────────────────────────────────────────────────────────
 async function viewInbox() {
-  if (!state.sessionId) { showToast('Create an inbox first', 'error'); return; }
+  if (!state.emailAddress) { showToast('Create an inbox first', 'error'); return; }
   document.getElementById('inbox-section').classList.add('visible')
   document.getElementById('inbox-title-email').textContent = state.emailAddress
   document.getElementById('inbox-section').scrollIntoView({ behavior: 'smooth' })
-  startPolling(state.sessionId)
+  startPolling()
   await refreshMessages()
 }
 
-function startPolling(inboxId) {
+function startPolling() {
   stopPolling()
   state.pollingInterval = setInterval(async () => {
-    try {
-        const res = await fetch(`/api/inbox/${inboxId}`)
-        if (!res.ok) { stopPolling(); showExpiredState(); return }
-        const { data } = await res.json()
-        if (!data || !data.is_active || new Date(data.expires_at) < new Date()) {
-            stopPolling()
-            showExpiredState()
-            return
-        }
-
-        state.expiresAt = data.expires_at;
-        startTimer();
-
-        refreshMessages()
-    } catch(e) {
-        // network error, continue polling
-    }
+    if (!state.emailAddress) { stopPolling(); return }
+    try { await refreshMessages() } catch(e) {}
   }, 5000)
 }
 
@@ -1080,21 +1014,16 @@ function stopPolling() {
 }
 
 async function refreshMessages() {
-  if (!state.sessionId) return
+  if (!state.emailAddress) return
   try {
-    const res = await fetch('/api/inbox/'+state.sessionId+'/messages')
+    const res = await fetch('/api/emails/' + encodeURIComponent(state.emailAddress))
     const json = await res.json()
     if (!res.ok || !json.success) return
-    const data = json.data;
-
-    state.messages = data.messages || []
+    state.messages = json.result || []
     renderEmailList()
     document.getElementById('inbox-subtitle').textContent =
-      data.message_count + ' message' + (data.message_count !== 1 ? 's' : '') +
-      ' · ' + data.unread_count + ' unread'
-  } catch(e) {
-    console.error(e)
-  }
+      state.messages.length + ' message' + (state.messages.length !== 1 ? 's' : '')
+  } catch(e) { console.error(e) }
 }
 
 function renderEmailList() {
@@ -1107,102 +1036,130 @@ function renderEmailList() {
     </div>`
     return
   }
-
-  list.innerHTML = state.messages.map(m => `
-    <div class="email-item ${m.is_read ? '' : 'unread'}" onclick="openMessage('${m.id}')">
-      <div class="${m.is_read ? 'email-read-dot' : 'email-unread-dot'}"></div>
+  list.innerHTML = state.messages.map(m => {
+    const ts = typeof m.received_at === 'number' ? m.received_at * 1000 : new Date(m.received_at).getTime()
+    const attBadge = m.has_attachments ? '<span style="color:#0099ff;font-size:12px">📎 attachment</span>' : ''
+    return `
+    <div class="email-item" onclick="openMessage('${escHtml(m.id)}')">
+      <div class="email-unread-dot"></div>
       <div class="email-item-body">
-        <div class="email-from">${escHtml(m.from_name || m.from_address)}</div>
-        <div class="email-subject">${escHtml(m.subject)}</div>
-        <div class="email-preview">${escHtml((m.body_text || '').slice(0,100))}</div>
+        <div class="email-from">${escHtml(m.from_address)}</div>
+        <div class="email-subject">${escHtml(m.subject || '(no subject)')}</div>
+        ${attBadge}
       </div>
       <div class="email-item-meta">
-        <div class="email-time">${formatTime(m.received_at)}</div>
+        <div class="email-time">${formatTime(ts)}</div>
       </div>
-    </div>
-  `).join('')
+    </div>`
+  }).join('')
 }
 
 // ── Message Detail ────────────────────────────────────────────────────────
-async function openMessage(msgId) {
+async function openMessage(emailId) {
   try {
-    const res = await fetch('/api/inbox/'+state.sessionId+'/messages/'+msgId)
+    const res = await fetch('/api/inbox/' + emailId)
     const json = await res.json()
-    if (!res.ok || !json.success) throw new Error(json.error || 'Failed to load message')
-    const msg = json.data;
+    if (!res.ok || !json.success) throw new Error(json.error || 'Failed to load')
+    const msg = json.result
 
-    document.getElementById('detail-subject').textContent = msg.subject
-    document.getElementById('detail-from').textContent = (msg.from_name ? msg.from_name+' <' : '') + msg.from_address + (msg.from_name ? '>' : '')
-    document.getElementById('detail-to').textContent = msg.inbox_address
-    document.getElementById('detail-date').textContent = new Date(msg.received_at).toLocaleString()
+    document.getElementById('detail-subject').textContent = msg.subject || '(no subject)'
+    document.getElementById('detail-from').textContent = msg.from_address
+    document.getElementById('detail-to').textContent = msg.to_address
+    const ts = typeof msg.received_at === 'number' ? msg.received_at * 1000 : new Date(msg.received_at).getTime()
+    document.getElementById('detail-date').textContent = new Date(ts).toLocaleString()
 
-    if (msg.body_html) {
-      document.getElementById('detail-body').innerHTML = '<div class="email-body-html">'+msg.body_html+'</div>'
+    // Render HTML body in sandboxed iframe to prevent XSS
+    const bodyEl = document.getElementById('detail-body')
+    if (msg.html_content) {
+      const iframe = document.createElement('iframe')
+      iframe.sandbox = 'allow-same-origin'
+      iframe.style.cssText = 'width:100%;border:none;min-height:200px;background:#fff;border-radius:8px'
+      iframe.srcdoc = msg.html_content
+      bodyEl.innerHTML = ''
+      bodyEl.appendChild(iframe)
+      iframe.addEventListener('load', () => {
+        try { iframe.style.height = iframe.contentDocument.body.scrollHeight + 32 + 'px' } catch(e) {}
+      })
     } else {
-      document.getElementById('detail-body').innerHTML = '<pre class="email-body-text">'+escHtml(msg.body_text)+'</pre>'
+      bodyEl.innerHTML = '<pre class="email-body-text">' + escHtml(msg.text_content || '') + '</pre>'
     }
 
-    document.getElementById('detail-delete-btn').onclick = () => deleteMessage(msgId)
+    // Attachments
+    loadAttachments(emailId, msg.has_attachments)
 
+    document.getElementById('detail-delete-btn').onclick = () => deleteEmail(emailId)
     document.getElementById('email-list').style.display = 'none'
     document.getElementById('email-detail').classList.add('visible')
-
-    // Mark as read in local state
-    const m = state.messages.find(x => x.id === msgId)
-    if (m) m.is_read = true
-    renderEmailList()
   } catch(e) { showToast(e.message, 'error') }
+}
+
+async function loadAttachments(emailId, hasAttachments) {
+  let container = document.getElementById('att-container')
+  if (!container) {
+    container = document.createElement('div')
+    container.id = 'att-container'
+    container.style.cssText = 'padding:12px 24px;border-top:1px solid #262626'
+    document.querySelector('.email-detail-actions').insertAdjacentElement('afterend', container)
+  }
+  container.innerHTML = ''
+  if (!hasAttachments) return
+  try {
+    const res = await fetch('/api/inbox/' + emailId + '/attachments')
+    const json = await res.json()
+    if (!json.success || !json.result?.length) return
+    container.innerHTML = '<div style="font-size:12px;font-weight:600;letter-spacing:.5px;color:#999;text-transform:uppercase;margin-bottom:8px">Attachments</div>'
+    json.result.forEach(att => {
+      const a = document.createElement('a')
+      a.href = '/api/attachments/' + att.id
+      a.download = att.filename
+      a.style.cssText = 'display:inline-flex;align-items:center;gap:8px;background:#1c1c1c;border:1px solid #262626;border-radius:8px;padding:8px 14px;color:#fff;text-decoration:none;font-size:13px;margin:4px 4px 4px 0'
+      a.textContent = '📎 ' + att.filename + ' (' + formatBytes(att.size) + ')'
+      container.appendChild(a)
+    })
+  } catch(e) { console.error(e) }
+}
+
+function formatBytes(bytes) {
+  if (bytes < 1024) return bytes + ' B'
+  if (bytes < 1048576) return (bytes/1024).toFixed(1) + ' KB'
+  return (bytes/1048576).toFixed(1) + ' MB'
 }
 
 function closeDetail() {
   document.getElementById('email-detail').classList.remove('visible')
   document.getElementById('email-list').style.display = ''
+  const att = document.getElementById('att-container')
+  if (att) att.remove()
 }
 
-async function deleteMessage(msgId) {
+async function deleteEmail(emailId) {
   try {
-    const res = await fetch('/api/inbox/'+state.sessionId+'/messages/'+msgId, { method: 'DELETE' })
+    const res = await fetch('/api/inbox/' + emailId, { method: 'DELETE' })
     if (!res.ok) throw new Error('Failed to delete')
     closeDetail()
     await refreshMessages()
-    showToast('Message deleted', 'success')
+    showToast('Email deleted', 'success')
   } catch(e) { showToast(e.message, 'error') }
 }
 
 // ── Inbox Actions ─────────────────────────────────────────────────────────
 async function extendInbox() {
-  if (!state.sessionId) return
-  try {
-    const res = await fetch('/api/inbox/'+state.sessionId+'/extend', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ extra_seconds: 3600 })
-    })
-    const json = await res.json()
-    if (res.ok && json.success) {
-      state.expiresAt = json.data.expires_at
-      state.totalTtl += 3600
-      startTimer()
-      showToast('Extended by 1 hour ✓', 'success')
-    } else {
-        throw new Error(json.error || 'Failed to extend inbox')
-    }
-  } catch(e) { showToast(e.message, 'error') }
+  showToast('Emails have no expiry — they stay until deleted.', 'info')
 }
 
 async function deleteInbox() {
-  if (!confirm('Delete this inbox and all messages permanently?')) return
+  if (!confirm('Delete this inbox and all emails permanently?')) return
   try {
-    const res = await fetch('/api/inbox/'+state.sessionId, { method: 'DELETE' })
-    if(!res.ok) throw new Error('Failed to delete')
-    showExpiredState()
+    const res = await fetch('/api/emails/' + encodeURIComponent(state.emailAddress), { method: 'DELETE' })
+    if (!res.ok) throw new Error('Failed to delete')
+    resetToHome()
     showToast('Inbox deleted', 'success')
     window.scrollTo({ top: 0, behavior: 'smooth' })
   } catch(e) { showToast(e.message, 'error') }
 }
 
 async function refreshEmail() {
-  if (state.sessionId) { showToast('Delete current inbox first', 'error'); return; }
+  if (state.emailAddress) { showToast('Delete current inbox first', 'error'); return; }
   generatePreviewEmail()
 }
 
@@ -1213,7 +1170,6 @@ async function copyEmail() {
     await navigator.clipboard.writeText(address)
     showToast('Copied!', 'success')
   } catch(e) {
-    // Fallback for non-HTTPS or older browsers
     const el = document.createElement('textarea')
     el.value = address
     document.body.appendChild(el)
@@ -1229,14 +1185,12 @@ function escHtml(str) {
   return (str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
 }
 
-function formatTime(iso) {
-  const d = new Date(iso)
-  const now = new Date()
-  const diff = (now - d) / 1000
+function formatTime(ts) {
+  const diff = (Date.now() - ts) / 1000
   if (diff < 60) return 'just now'
   if (diff < 3600) return Math.floor(diff/60)+'m ago'
   if (diff < 86400) return Math.floor(diff/3600)+'h ago'
-  return d.toLocaleDateString()
+  return new Date(ts).toLocaleDateString()
 }
 
 function showToast(message, type = 'info') {

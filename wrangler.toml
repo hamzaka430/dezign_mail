@@ -2,12 +2,27 @@ name = "dezignmail"
 compatibility_date = "2024-09-23"
 pages_build_output_dir = "dist"
 
+# ─── Environment Variables ────────────────────────────────────────────────────
 [vars]
-ALLOWED_DOMAINS = "healthtek.eu.cc"
+ALLOWED_DOMAINS    = "healthtek.eu.cc"
+HOURS_TO_DELETE    = 3
+TELEGRAM_LOG_ENABLE = false
 
-[[kv_namespaces]]
-binding = "DEZIGNMAIL_KV"
-id = "PLACEHOLDER_KV_ID"
-preview_id = "PLACEHOLDER_KV_PREVIEW_ID"
+# ─── Cloudflare D1 (SQLite email store) ──────────────────────────────────────
+# Create with: wrangler d1 create dezignmail-d1
+# Then replace the database_id below.
+[[d1_databases]]
+binding     = "D1"
+database_name = "dezignmail-d1"
+database_id   = "PLACEHOLDER_D1_ID"    # ← replace after `wrangler d1 create`
+
+# ─── Cloudflare R2 (attachment storage) ──────────────────────────────────────
+# Create with: wrangler r2 bucket create dezignmail-attachments
+[[r2_buckets]]
+binding           = "R2"
+bucket_name       = "dezignmail-attachments"
+preview_bucket_name = "dezignmail-attachments-preview"
+
+# ─── Scheduled Cron (cleanup old emails every 2 hours) ────────────────────────
 [triggers]
-crons = ["*/10 * * * *"]
+crons = ["0 */2 * * *"]
