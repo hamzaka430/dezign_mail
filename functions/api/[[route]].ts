@@ -20,6 +20,22 @@ import * as r2 from '../../src/database/r2'
 import { getDomain, generateId, now } from '../../src/utils/helpers'
 import type { Env } from '../../src/types'
 
+/**
+ * Lazy cleanup: runs non-blocking on inbox poll requests.
+ * Replaces the cron trigger (unsupported on hosted deploy).
+ * Deletes emails older than HOURS_TO_DELETE hours.
+ */
+async function lazyCleanup(env: Env): Promise<void> {
+  try {
+    const hours = Number(env.HOURS_TO_DELETE ?? 3)
+    const cutoff = now() - hours * 3600
+    const { deleted } = await db.deleteOldEmails(env.D1, cutoff)
+    if (deleted > 0) console.log(`[cleanup] Deleted ${deleted} email(s) older than ${hours}h`)
+  } catch (e) {
+    console.warn('[cleanup] Lazy cleanup error (non-fatal):', e)
+  }
+}
+
 const app = new Hono<{ Bindings: Env }>()
 
 // ─── Middleware ───────────────────────────────────────────────────────────────
@@ -96,6 +112,9 @@ app.get('/api/emails/:address', async (c) => {
   if (!isDomainAllowed(address, c.env)) {
     return c.json({ success: false, error: 'Domain not supported' }, 404)
   }
+
+  // Lazy cleanup: runs non-blocking — replaces cron trigger
+  c.executionCtx.waitUntil(lazyCleanup(c.env))
 
   const limit = Math.min(Number(c.req.query('limit') ?? 50), 100)
   const offset = Number(c.req.query('offset') ?? 0)
