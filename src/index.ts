@@ -320,4 +320,24 @@ app.post('/api/inbox/:sessionId/extend', (c) => {
   return c.json({ success: true, data: { message: 'Inboxes have no expiry in the new model.' } })
 })
 
+// ─── Static asset fallback ────────────────────────────────────────────────────
+// For all non-API routes, serve static assets (index.html, etc.) via the
+// Cloudflare Pages ASSETS binding. This handles / and any SPA-style routes.
+app.get('*', async (c) => {
+  try {
+    // Try the exact path first
+    const url = new URL(c.req.url)
+    let response = await c.env.ASSETS.fetch(c.req.raw)
+    // If not found, serve index.html (SPA fallback)
+    if (response.status === 404) {
+      url.pathname = '/index.html'
+      response = await c.env.ASSETS.fetch(new Request(url.toString(), c.req.raw))
+    }
+    return response
+  } catch {
+    // If ASSETS binding unavailable, return basic HTML response
+    return c.html('<html><body><h1>Dezignmail</h1><p>Loading...</p></body></html>')
+  }
+})
+
 export default app
