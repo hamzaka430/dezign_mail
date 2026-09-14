@@ -1,10 +1,10 @@
 # Dezignmail
 
-**Professional disposable email service by [Dezignwise](https://dezignwise.eu.cc)**
+**Professional disposable email service by [Dezignwise](https://dezignwise.com)**
 
 A production-ready, SaaS-grade temporary email service built entirely on Cloudflare's edge infrastructure — no VPS, no traditional servers, no maintenance overhead.
 
-🌐 **Live:** [https://dezignmail.eu.cc](https://dezignmail.eu.cc)
+🌐 **Live:** [https://dezignmail.dezignwise.store](https://dezignmail.dezignwise.store)
 
 ---
 
