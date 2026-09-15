@@ -1,1 +1,14 @@
-{"version":1,"include":["/api/*"],"exclude":[]}
+{
+  "version": 1,
+  "include": ["/api/*"],
+  "exclude": [
+    "/index.html",
+    "/favicon.png",
+    "/logo.png",
+    "/manifest.json",
+    "/*.png",
+    "/*.ico",
+    "/*.json",
+    "/assets/*"
+  ]
+}

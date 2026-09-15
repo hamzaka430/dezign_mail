@@ -6,9 +6,9 @@
   "scripts": {
     "dev": "wrangler pages dev dist --compatibility-date=2024-09-23",
     "dev:sandbox": "vite build && wrangler pages dev dist",
-    "build": "vite build",
+    "build": "vite build && cp -r public/* dist/ 2>/dev/null || true",
     "preview": "wrangler pages dev dist",
-    "deploy": "vite build && wrangler pages deploy dist --project-name dezignmail",
+    "deploy": "npm run build && wrangler pages deploy dist --project-name dezignmail",
     "cf-typegen": "wrangler types --env-interface CloudflareBindings",
     "typecheck": "tsc --noEmit",
     "db:create": "wrangler d1 create dezignmail-d1",
