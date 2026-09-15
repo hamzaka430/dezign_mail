@@ -8,6 +8,12 @@
   <meta property="og:title" content="Dezignmail — Professional Disposable Email">
   <meta property="og:description" content="Enterprise-grade temporary email service by Dezignwise. Real MX records, instant setup, zero spam.">
   <meta property="og:type" content="website">
+  <meta name="theme-color" content="#0099ff">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Dezignmail">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/logo.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -542,6 +548,58 @@
       footer { padding: 40px 24px 24px; }
       .page-wrap { padding: 40px 24px 80px; }
     }
+
+    /* ══ NEW FEATURES CSS ══ */
+    body.light-mode { --ink:#0a0a0a; --ink-2:#525252; --ink-3:#a3a3a3; --canvas:#f5f5f5; --s1:#ffffff; --s2:#f0f0f0; --s3:#e5e5e5; --border:#d4d4d4; --border-soft:#e8e8e8; }
+    .theme-toggle { width:36px;height:36px;background:var(--s2);border:1px solid var(--border);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;transition:background 0.2s;flex-shrink:0; }
+    .theme-toggle:hover { background:var(--s3); }
+    .nav-badge { display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;background:var(--blue);border-radius:9px;font-size:10px;font-weight:700;color:#fff;margin-left:4px;vertical-align:middle; }
+    .countdown-bar { display:flex;align-items:center;gap:10px;background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.15);border-radius:var(--r-md);padding:10px 14px;margin-bottom:16px;font-size:13px; }
+    .countdown-time { font-weight:700;color:var(--red);font-family:monospace;letter-spacing:0.5px; }
+    .countdown-time.safe { color:var(--green); }
+    .countdown-time.warn { color:#f97316; }
+    .search-bar { display:flex;align-items:center;gap:10px;background:var(--s2);border:1px solid var(--border);border-radius:var(--r-md);padding:10px 14px;margin-bottom:12px; }
+    .search-input { flex:1;background:none;border:none;outline:none;color:var(--ink);font-size:14px;font-family:inherit; }
+    .search-input::placeholder { color:var(--ink-3); }
+    .search-clear { background:none;border:none;cursor:pointer;color:var(--ink-3);font-size:20px;line-height:1;padding:0; }
+    .modal-overlay { position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.2s; }
+    .modal-overlay.open { opacity:1;pointer-events:all; }
+    .modal { background:var(--s1);border:1px solid var(--border);border-radius:var(--r-xl);padding:32px;width:90%;max-width:480px;position:relative;transform:translateY(12px);transition:transform 0.2s; }
+    .modal-overlay.open .modal { transform:translateY(0); }
+    .modal-title { font-size:20px;font-weight:800;letter-spacing:-0.5px;margin-bottom:8px; }
+    .modal-sub { font-size:14px;color:var(--ink-2);margin-bottom:24px; }
+    .modal-url { display:flex;gap:8px;align-items:center;background:var(--s2);border:1px solid var(--border);border-radius:var(--r-md);padding:12px 14px;margin-bottom:16px; }
+    .modal-url-text { flex:1;font-size:13px;color:var(--blue);font-family:monospace;word-break:break-all; }
+    .modal-close { position:absolute;top:16px;right:16px;background:var(--s2);border:none;border-radius:50%;width:32px;height:32px;cursor:pointer;font-size:18px;color:var(--ink-2);display:flex;align-items:center;justify-content:center; }
+    .modal-close:hover { background:var(--s3);color:var(--ink); }
+    .pwd-input { width:100%;background:var(--s2);color:var(--ink);border:1px solid var(--border);border-radius:var(--r-md);padding:12px 14px;font-size:15px;font-family:inherit;outline:none;transition:border-color 0.15s;margin-bottom:12px; }
+    .pwd-input:focus { border-color:var(--blue); }
+    .forward-input { width:100%;background:var(--s2);color:var(--ink);border:1px solid var(--border);border-radius:var(--r-md);padding:12px 14px;font-size:14px;font-family:inherit;outline:none;transition:border-color 0.15s;margin-bottom:12px; }
+    .forward-input:focus { border-color:var(--blue); }
+    .btn-share { background:rgba(139,92,246,0.1);color:var(--purple);border:1px solid rgba(139,92,246,0.25);border-radius:var(--r-pill);padding:9px 16px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;transition:background 0.15s; }
+    .btn-share:hover { background:rgba(139,92,246,0.18); }
+    .email-item { position:relative; }
+    .email-delete-btn { position:absolute;right:12px;top:50%;transform:translateY(-50%);background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);border-radius:6px;padding:4px 8px;color:var(--red);font-size:11px;cursor:pointer;opacity:0;transition:opacity 0.15s;white-space:nowrap; }
+    .email-item:hover .email-delete-btn { opacity:1; }
+    .pwa-banner { position:fixed;bottom:80px;right:24px;z-index:500;background:var(--s1);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px 20px;max-width:300px;box-shadow:0 8px 32px rgba(0,0,0,0.3);display:none; }
+    .pwa-banner.show { display:block; }
+    .pwa-banner-title { font-size:14px;font-weight:700;margin-bottom:4px; }
+    .pwa-banner-sub { font-size:12px;color:var(--ink-3);margin-bottom:14px; }
+    .pwa-banner-btns { display:flex;gap:8px; }
+    .pwa-btn { flex:1;padding:8px;font-size:12px;font-weight:600;border-radius:var(--r-md);cursor:pointer;border:none;font-family:inherit; }
+    .pwa-btn.install { background:var(--blue);color:#fff; }
+    .pwa-btn.dismiss { background:var(--s3);color:var(--ink-2); }
+    .api-section { margin-bottom:32px; }
+    .api-section-title { font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--ink-3);margin-bottom:14px; }
+    .api-endpoint { background:var(--s2);border:1px solid var(--border);border-radius:var(--r-md);padding:16px;margin-bottom:12px; }
+    .api-method { display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;margin-bottom:6px; }
+    .api-method.get { background:rgba(34,197,94,0.15);color:var(--green); }
+    .api-method.post { background:rgba(0,153,255,0.15);color:var(--blue); }
+    .api-method.delete { background:rgba(239,68,68,0.15);color:var(--red); }
+    .api-path { font-family:monospace;font-size:13px;color:var(--ink);font-weight:600; }
+    .api-desc { font-size:12px;color:var(--ink-3);margin-top:4px; }
+    .auto-refresh-badge { display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--green);margin-left:8px; }
+    .auto-refresh-dot { width:6px;height:6px;background:var(--green);border-radius:50%;animation:pulse 2s infinite; }
   </style>
 </head>
 <body>
@@ -559,7 +617,9 @@
       <button class="nav-link" onclick="showPage('how-it-works-page')">How it works</button>
       <button class="nav-link" onclick="showPage('about-page')">About</button>
       <button class="nav-link" onclick="showPage('contact-page')">Contact</button>
-      <button class="nav-cta" onclick="showHome(); setTimeout(scrollToCard,100)">Get Inbox →</button>
+      <button class="nav-link" onclick="showPage('api-page')">API</button>
+      <div class="theme-toggle" onclick="toggleTheme()" id="theme-btn" title="Toggle theme">🌙</div>
+      <button class="nav-cta" onclick="showHome(); setTimeout(scrollToCard,100)">Inbox <span id="nav-email-badge" class="nav-badge" style="display:none">0</span> →</button>
     </div>
     <button class="nav-hamburger" onclick="toggleMobileMenu()" id="hamburger">
       <span></span><span></span><span></span>
@@ -675,13 +735,29 @@
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
             Refresh
           </button>
-          <button class="btn-secondary" onclick="copyEmail()" style="padding:9px 16px;font-size:13px">Copy address</button>
+          <button class="btn-share" onclick="openShareModal()">🔗 Share</button>
+          <button class="btn-secondary" onclick="openForwardModal()" style="padding:9px 16px;font-size:13px">📤 Forward</button>
+          <button class="btn-secondary" onclick="copyEmail()" style="padding:9px 16px;font-size:13px">Copy</button>
+          <button class="btn-secondary" onclick="openPasswordModal()" style="padding:9px 16px;font-size:13px">🔐 Lock</button>
           <button class="btn-danger" onclick="deleteInbox()">Delete</button>
         </div>
+      </div>
+      <!-- Countdown -->
+      <div class="countdown-bar" id="countdown-bar" style="display:none">
+        ⏱️ <span style="color:var(--ink-3);font-size:13px">Inbox expires in</span>
+        <span class="countdown-time safe" id="countdown-display">3:00:00</span>
+        <span style="margin-left:auto;font-size:11px;color:var(--ink-3)">Auto-deletes after 3h</span>
       </div>
       <div class="inbox-status">
         <span class="inbox-pulse"></span>
         <span id="inbox-subtitle">Checking for emails…</span>
+        <span class="auto-refresh-badge"><span class="auto-refresh-dot"></span>Auto-refresh on</span>
+      </div>
+      <!-- Search -->
+      <div class="search-bar" id="search-bar" style="display:none">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        <input type="text" class="search-input" id="search-input" placeholder="Search emails…" oninput="filterEmails()">
+        <button class="search-clear" onclick="clearSearch()">×</button>
       </div>
 
       <!-- Email list -->
@@ -720,7 +796,9 @@
             </div>
           </div>
           <div class="detail-toolbar">
-            <button class="btn-secondary" style="font-size:13px;padding:7px 14px" onclick="deleteCurrentEmail()">Delete email</button>
+            <button class="btn-secondary" style="font-size:13px;padding:7px 14px" onclick="forwardCurrentEmail()">📤 Forward</button>
+            <button class="btn-secondary" style="font-size:13px;padding:7px 14px" onclick="printEmail()">🖨️ Print</button>
+            <button class="btn-secondary" style="font-size:13px;padding:7px 14px" onclick="deleteCurrentEmail()">🗑️ Delete</button>
           </div>
           <div class="detail-body" id="detail-body">—</div>
         </div>
@@ -1073,20 +1151,206 @@
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
+<!-- ══════════════════════ SHARE MODAL ══════════════════════ -->
+<div class="modal-overlay" id="share-modal" onclick="if(event.target===this)closeShareModal()">
+  <div class="modal">
+    <button class="modal-close" onclick="closeShareModal()">✕</button>
+    <div class="modal-title">🔗 Share Your Inbox</div>
+    <div class="modal-sub">Anyone with this link can view emails in your inbox.</div>
+    <div class="modal-url">
+      <span class="modal-url-text" id="share-url-text"></span>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <button class="btn-secondary" style="flex:1" onclick="closeShareModal()">Cancel</button>
+      <button class="btn-primary" style="flex:1" onclick="copyShareUrl()">📋 Copy Link</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════ PASSWORD MODAL ══════════════════════ -->
+<div class="modal-overlay" id="pwd-modal" onclick="if(event.target===this)closePasswordModal()">
+  <div class="modal">
+    <button class="modal-close" onclick="closePasswordModal()">✕</button>
+    <div class="modal-title">🔐 Password Lock</div>
+    <div class="modal-sub">Set a session password to protect your inbox from unauthorized access.</div>
+    <input type="password" id="pwd-set-input" class="pwd-input" placeholder="Enter password (min 4 chars)">
+    <div style="display:flex;gap:8px">
+      <button class="btn-secondary" style="flex:1" onclick="removePwdLock()">🔓 Remove Lock</button>
+      <button class="btn-primary" style="flex:1" onclick="setPassword()">Set Password</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════ FORWARD MODAL ══════════════════════ -->
+<div class="modal-overlay" id="forward-modal" onclick="if(event.target===this)closeForwardModal()">
+  <div class="modal">
+    <button class="modal-close" onclick="closeForwardModal()">✕</button>
+    <div class="modal-title">📤 Forward Emails</div>
+    <div class="modal-sub">Forward incoming emails to your personal address.</div>
+    <input type="email" id="forward-email-input" class="forward-input" placeholder="your@email.com">
+    <div style="display:flex;gap:8px">
+      <button class="btn-secondary" style="flex:1" onclick="closeForwardModal()">Cancel</button>
+      <button class="btn-primary" style="flex:1" onclick="saveForwardSettings()">Save Settings</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════ PWA BANNER ══════════════════════ -->
+<div class="pwa-banner" id="pwa-banner">
+  <div class="pwa-banner-title">📱 Install Dezignmail</div>
+  <div class="pwa-banner-sub">Add to your home screen for quick access</div>
+  <div class="pwa-banner-btns">
+    <button class="btn-secondary" style="font-size:12px;padding:6px 12px" onclick="dismissPWA()">Not now</button>
+    <button class="btn-primary" style="font-size:12px;padding:6px 14px" onclick="installPWA()">Install</button>
+  </div>
+</div>
+
+<!-- ══════════════════════ API PAGE ══════════════════════ -->
+<div id="api-page" style="display:none;min-height:100vh;padding-top:80px">
+  <div style="max-width:820px;margin:0 auto;padding:40px 24px">
+    <div style="text-align:center;margin-bottom:48px">
+      <div class="badge" style="margin:0 auto 16px"><span class="badge-dot"></span>REST API</div>
+      <h1 style="font-size:clamp(28px,5vw,42px);font-weight:800;margin:0 0 12px">Dezignmail <span class="grad">API Docs</span></h1>
+      <p style="font-size:15px;color:var(--ink-3);max-width:520px;margin:0 auto">Integrate temporary email into your apps. No API key required for basic endpoints.</p>
+    </div>
+
+    <!-- Base URL -->
+    <div class="api-section">
+      <div class="api-section-title">Base URL</div>
+      <div style="background:var(--s3);border:1px solid var(--border);border-radius:10px;padding:16px 20px;font-family:monospace;font-size:13px;color:var(--blue);display:flex;justify-content:space-between;align-items:center">
+        <span id="api-base-url">https://dezignmail.pages.dev/api</span>
+        <button onclick="copyApiExample('api-base-url')" style="background:none;border:none;cursor:pointer;color:var(--ink-3);font-size:16px">📋</button>
+      </div>
+    </div>
+
+    <!-- Endpoints -->
+    <div class="api-section">
+      <div class="api-section-title">Endpoints</div>
+
+      <div class="api-endpoint">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <span class="api-method get">GET</span>
+          <span class="api-path">/api/address/generate</span>
+        </div>
+        <div class="api-desc">Generate a new random email address</div>
+        <div style="background:var(--s3);border-radius:8px;padding:12px 16px;margin-top:10px;font-size:12px;font-family:monospace;color:var(--ink-2);display:flex;justify-content:space-between;align-items:flex-start">
+          <pre id="api-ex-1" style="margin:0;white-space:pre-wrap">curl https://dezignmail.pages.dev/api/address/generate</pre>
+          <button onclick="copyApiExample('api-ex-1')" style="background:none;border:none;cursor:pointer;color:var(--ink-3);font-size:14px;flex-shrink:0">📋</button>
+        </div>
+      </div>
+
+      <div class="api-endpoint">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <span class="api-method post">POST</span>
+          <span class="api-path">/api/inbox/create</span>
+        </div>
+        <div class="api-desc">Create inbox with optional custom alias and domain</div>
+        <div style="background:var(--s3);border-radius:8px;padding:12px 16px;margin-top:10px;font-size:12px;font-family:monospace;color:var(--ink-2);display:flex;justify-content:space-between;align-items:flex-start">
+          <pre id="api-ex-2" style="margin:0;white-space:pre-wrap">curl -X POST https://dezignmail.pages.dev/api/inbox/create \
+  -H "Content-Type: application/json" \
+  -d '{"custom_alias":"mybox","domain":"dezignmail.eu.cc"}'</pre>
+          <button onclick="copyApiExample('api-ex-2')" style="background:none;border:none;cursor:pointer;color:var(--ink-3);font-size:14px;flex-shrink:0">📋</button>
+        </div>
+      </div>
+
+      <div class="api-endpoint">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <span class="api-method get">GET</span>
+          <span class="api-path">/api/emails/:address</span>
+        </div>
+        <div class="api-desc">List all emails for an inbox address</div>
+        <div style="background:var(--s3);border-radius:8px;padding:12px 16px;margin-top:10px;font-size:12px;font-family:monospace;color:var(--ink-2);display:flex;justify-content:space-between;align-items:flex-start">
+          <pre id="api-ex-3" style="margin:0;white-space:pre-wrap">curl "https://dezignmail.pages.dev/api/emails/mybox@dezignmail.eu.cc"</pre>
+          <button onclick="copyApiExample('api-ex-3')" style="background:none;border:none;cursor:pointer;color:var(--ink-3);font-size:14px;flex-shrink:0">📋</button>
+        </div>
+      </div>
+
+      <div class="api-endpoint">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <span class="api-method get">GET</span>
+          <span class="api-path">/api/inbox/:emailId</span>
+        </div>
+        <div class="api-desc">Get a single email by ID (full content)</div>
+        <div style="background:var(--s3);border-radius:8px;padding:12px 16px;margin-top:10px;font-size:12px;font-family:monospace;color:var(--ink-2);display:flex;justify-content:space-between;align-items:flex-start">
+          <pre id="api-ex-4" style="margin:0;white-space:pre-wrap">curl "https://dezignmail.pages.dev/api/inbox/EMAIL_ID"</pre>
+          <button onclick="copyApiExample('api-ex-4')" style="background:none;border:none;cursor:pointer;color:var(--ink-3);font-size:14px;flex-shrink:0">📋</button>
+        </div>
+      </div>
+
+      <div class="api-endpoint">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <span class="api-method delete">DELETE</span>
+          <span class="api-path">/api/inbox/:emailId</span>
+        </div>
+        <div class="api-desc">Delete a single email by ID</div>
+      </div>
+
+      <div class="api-endpoint">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <span class="api-method delete">DELETE</span>
+          <span class="api-path">/api/emails/:address</span>
+        </div>
+        <div class="api-desc">Delete all emails for an inbox (wipe inbox)</div>
+      </div>
+
+      <div class="api-endpoint">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <span class="api-method get">GET</span>
+          <span class="api-path">/api/domains</span>
+        </div>
+        <div class="api-desc">List all available email domains</div>
+        <div style="background:var(--s3);border-radius:8px;padding:12px 16px;margin-top:10px;font-size:12px;font-family:monospace;color:var(--ink-2);display:flex;justify-content:space-between;align-items:flex-start">
+          <pre id="api-ex-5" style="margin:0;white-space:pre-wrap">curl "https://dezignmail.pages.dev/api/domains"</pre>
+          <button onclick="copyApiExample('api-ex-5')" style="background:none;border:none;cursor:pointer;color:var(--ink-3);font-size:14px;flex-shrink:0">📋</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Response format -->
+    <div class="api-section">
+      <div class="api-section-title">Response Format</div>
+      <div style="background:var(--s3);border:1px solid var(--border);border-radius:10px;padding:16px 20px;font-family:monospace;font-size:12px;color:var(--ink-2)">
+        <pre style="margin:0;white-space:pre-wrap">// Success
+{ "success": true, "data": { ... } }
+
+// Error
+{ "success": false, "error": "message" }</pre>
+      </div>
+    </div>
+
+    <!-- Rate limits -->
+    <div class="api-section">
+      <div class="api-section-title">Rate Limits &amp; Notes</div>
+      <ul style="color:var(--ink-3);font-size:14px;line-height:2;padding-left:20px;margin:0">
+        <li>No API key required for public endpoints</li>
+        <li>Inboxes auto-expire after 3 hours</li>
+        <li>All emails are deleted when inbox expires</li>
+        <li>Attachments accessible via <code style="color:var(--blue);font-size:12px">/api/inbox/:id/attachments</code></li>
+        <li>Fair use policy applies — no spam or abuse</li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
 <script>
 // ── State ────────────────────────────────────────────────────────────────────
 const state = {
   emailAddress: null,
   messages: [],
   pollingInterval: null,
+  countdownInterval: null,
   primaryDomain: 'dezignmail.eu.cc',
   availableDomains: ['dezignmail.eu.cc'],
   currentEmailId: null,
   readIds: new Set(),
+  inboxCreatedAt: null,
+  forwardEmail: localStorage.getItem('dmail_forward') || null,
+  isDark: localStorage.getItem('dmail_theme') !== 'light',
 }
 
 // ── Page routing ─────────────────────────────────────────────────────────────
-const PAGES = ['main-page','features-page','how-it-works-page','about-page','contact-page','privacy-page','terms-page']
+const PAGES = ['main-page','features-page','how-it-works-page','about-page','contact-page','privacy-page','terms-page','api-page']
 
 function showHome() {
   PAGES.forEach(id => {
@@ -1130,7 +1394,10 @@ function closeMobileMenu() {
 
 // ── Init ─────────────────────────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', async () => {
-  // Load domains from API
+  // Apply theme
+  if (!state.isDark) { document.body.classList.add('light-mode'); document.getElementById('theme-btn').textContent = '☀️'; }
+
+  // Load domains
   try {
     const res = await fetch('/api/domains')
     const json = await res.json()
@@ -1147,12 +1414,27 @@ window.addEventListener('DOMContentLoaded', async () => {
   const saved = sessionStorage.getItem('dmail_address')
   if (saved) {
     state.emailAddress = saved
+    state.inboxCreatedAt = parseInt(sessionStorage.getItem('dmail_created_at') || Date.now())
     document.getElementById('current-email').textContent = saved
     document.getElementById('view-btn').style.display = 'inline-flex'
     viewInbox()
   } else {
     generatePreviewEmail()
   }
+
+  // Shared inbox via URL
+  const urlParams = new URLSearchParams(window.location.search)
+  const sharedAddr = urlParams.get('inbox')
+  if (sharedAddr && !saved) loadSharedInbox(sharedAddr)
+
+  // PWA
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault(); window._pwaPrompt = e
+    if (!localStorage.getItem('pwa_dismissed')) setTimeout(() => document.getElementById('pwa-banner').classList.add('show'), 4000)
+  })
+
+  // Close modals on overlay click
+  document.querySelectorAll('.modal-overlay').forEach(o => o.addEventListener('click', e => { if(e.target===o) o.classList.remove('open') }))
 })
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -1220,7 +1502,9 @@ async function createInbox() {
     const json = await res.json()
     if (!res.ok || !json.success) throw new Error(json.error || 'Failed to create inbox')
     state.emailAddress = json.data.email_address
+    state.inboxCreatedAt = Date.now()
     sessionStorage.setItem('dmail_address', state.emailAddress)
+    sessionStorage.setItem('dmail_created_at', state.inboxCreatedAt)
     document.getElementById('current-email').textContent = state.emailAddress
     document.getElementById('view-btn').style.display = 'inline-flex'
     showToast('Inbox created!', 'success')
@@ -1238,17 +1522,40 @@ function viewInbox() {
   document.getElementById('inbox-section').classList.add('visible')
   document.getElementById('inbox-title-email').textContent = state.emailAddress
   document.getElementById('inbox-section').scrollIntoView({ behavior: 'smooth' })
+  document.getElementById('countdown-bar').style.display = 'flex'
+  document.getElementById('search-bar').style.display = 'flex'
   loadMessages()
   startPolling()
+  startCountdown()
 }
 
 function startPolling() {
   stopPolling()
-  state.pollingInterval = setInterval(loadMessages, 5000)
+  state.pollingInterval = setInterval(loadMessages, 10000)
 }
 
 function stopPolling() {
   if (state.pollingInterval) { clearInterval(state.pollingInterval); state.pollingInterval = null }
+}
+
+function startCountdown() {
+  stopCountdown()
+  if (!state.inboxCreatedAt) return
+  const EXPIRE = 3 * 60 * 60 * 1000
+  function tick() {
+    const rem = Math.max(0, EXPIRE - (Date.now() - state.inboxCreatedAt))
+    const h = Math.floor(rem/3600000), m = Math.floor((rem%3600000)/60000), s = Math.floor((rem%60000)/1000)
+    const el = document.getElementById('countdown-display')
+    if (!el) return
+    el.textContent = `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`
+    el.className = 'countdown-time ' + (rem < 600000 ? 'warn' : rem < 1800000 ? '' : 'safe')
+    if (rem === 0) { el.textContent = 'Expired'; stopCountdown() }
+  }
+  tick(); state.countdownInterval = setInterval(tick, 1000)
+}
+
+function stopCountdown() {
+  if (state.countdownInterval) { clearInterval(state.countdownInterval); state.countdownInterval = null }
 }
 
 async function loadMessages() {
@@ -1259,11 +1566,11 @@ async function loadMessages() {
     if (!json.success) return
     const emails = json.result || []
     state.messages = emails
-    renderEmailList(emails)
+    filterEmails()
+    const unread = emails.filter(e => !state.readIds.has(e.id)).length
     const sub = document.getElementById('inbox-subtitle')
-    sub.textContent = emails.length === 0
-      ? 'No messages yet — checking every 5 seconds…'
-      : `${emails.length} message${emails.length !== 1 ? 's' : ''} · Auto-refreshing`
+    sub.textContent = emails.length === 0 ? 'No messages yet…' : `${emails.length} message${emails.length!==1?'s':''} · ${unread} unread`
+    updateEmailBadge(unread)
   } catch(e) {}
 }
 
@@ -1287,10 +1594,11 @@ function renderEmailList(emails) {
       <div class="${isUnread ? 'unread-dot' : 'read-dot'}"></div>
       <div class="email-meta">
         <div class="email-from">${escHtml(e.from_address)}</div>
-        <div class="email-subject">${escHtml(e.subject || '(no subject)')}</div>
+        <div class="email-subject" style="${isUnread?'color:var(--ink);font-weight:600':''}">${escHtml(e.subject || '(no subject)')}</div>
         <div class="email-preview">${escHtml(preview)}</div>
       </div>
       <div class="email-time">${time}</div>
+      <button class="email-delete-btn" onclick="quickDeleteEmail(event,'${e.id}')">🗑️ Delete</button>
     </div>`
   }).join('')
 }
@@ -1359,10 +1667,15 @@ async function deleteInbox() {
   try {
     await fetch(`/api/emails/${encodeURIComponent(state.emailAddress)}`, { method: 'DELETE' })
     stopPolling()
+    stopCountdown()
     state.emailAddress = null
     state.messages = []
     state.currentEmailId = null
+    state.inboxCreatedAt = null
     sessionStorage.removeItem('dmail_address')
+    sessionStorage.removeItem('dmail_created_at')
+    document.getElementById('countdown-bar').style.display = 'none'
+    document.getElementById('search-bar').style.display = 'none'
     document.getElementById('inbox-section').classList.remove('visible')
     document.getElementById('view-btn').style.display = 'none'
     document.getElementById('email-detail').classList.remove('visible')
@@ -1381,10 +1694,136 @@ function submitContact(btn) {
   showToast('Message sent! We\'ll reply within 24 hours.', 'success')
 }
 
+// ══ NEW FEATURE FUNCTIONS ══
+
+function toggleTheme() {
+  state.isDark = !state.isDark
+  document.body.classList.toggle('light-mode', !state.isDark)
+  document.getElementById('theme-btn').textContent = state.isDark ? '🌙' : '☀️'
+  localStorage.setItem('dmail_theme', state.isDark ? 'dark' : 'light')
+}
+
+function updateEmailBadge(count) {
+  const b = document.getElementById('nav-email-badge')
+  if (!b) return
+  b.textContent = count; b.style.display = count > 0 ? 'inline-flex' : 'none'
+}
+
+function filterEmails() {
+  const q = (document.getElementById('search-input')?.value || '').toLowerCase().trim()
+  const filtered = q ? state.messages.filter(e =>
+    (e.from_address||'').toLowerCase().includes(q) ||
+    (e.subject||'').toLowerCase().includes(q) ||
+    (e.text_content||'').toLowerCase().includes(q)
+  ) : state.messages
+  renderEmailList(filtered)
+}
+
+function clearSearch() {
+  const i = document.getElementById('search-input'); if(i) i.value = ''
+  filterEmails()
+}
+
+async function quickDeleteEmail(evt, id) {
+  evt.stopPropagation()
+  try {
+    const res = await fetch(`/api/inbox/${id}`, { method: 'DELETE' })
+    if (res.ok) {
+      state.messages = state.messages.filter(e => e.id !== id)
+      state.readIds.delete(id)
+      filterEmails()
+      updateEmailBadge(state.messages.filter(e => !state.readIds.has(e.id)).length)
+      showToast('Email deleted', 'success')
+    }
+  } catch(e) { showToast('Delete failed', 'error') }
+}
+
+function openShareModal() {
+  if (!state.emailAddress) return
+  const url = `${location.origin}?inbox=${encodeURIComponent(state.emailAddress)}`
+  document.getElementById('share-url-text').textContent = url
+  document.getElementById('share-modal').classList.add('open')
+}
+function closeShareModal() { document.getElementById('share-modal').classList.remove('open') }
+function copyShareUrl() {
+  navigator.clipboard.writeText(document.getElementById('share-url-text').textContent)
+    .then(() => showToast('Share link copied!', 'success'))
+  closeShareModal()
+}
+
+function loadSharedInbox(addr) {
+  state.emailAddress = addr
+  state.inboxCreatedAt = Date.now()
+  document.getElementById('current-email').textContent = addr
+  document.getElementById('view-btn').style.display = 'inline-flex'
+  showToast('Viewing shared inbox: ' + addr, 'info')
+  viewInbox()
+}
+
+function openPasswordModal() { document.getElementById('pwd-modal').classList.add('open') }
+function closePasswordModal() { document.getElementById('pwd-modal').classList.remove('open') }
+
+async function setPassword() {
+  const pwd = document.getElementById('pwd-set-input').value.trim()
+  if (!pwd || pwd.length < 4) { showToast('Min 4 characters required', 'error'); return }
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pwd))
+  const hash = Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('')
+  sessionStorage.setItem('dmail_pwd', hash)
+  closePasswordModal()
+  showToast('🔐 Password set!', 'success')
+}
+
+function removePwdLock() {
+  sessionStorage.removeItem('dmail_pwd')
+  closePasswordModal()
+  showToast('Lock removed', 'info')
+}
+
+function openForwardModal() {
+  document.getElementById('forward-email-input').value = state.forwardEmail || ''
+  document.getElementById('forward-modal').classList.add('open')
+}
+function closeForwardModal() { document.getElementById('forward-modal').classList.remove('open') }
+function saveForwardSettings() {
+  const email = document.getElementById('forward-email-input').value.trim()
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showToast('Invalid email', 'error'); return }
+  state.forwardEmail = email || null
+  if (email) { localStorage.setItem('dmail_forward', email); showToast(`📤 Forward → ${email}`, 'success') }
+  else { localStorage.removeItem('dmail_forward'); showToast('Forwarding disabled', 'info') }
+  closeForwardModal()
+}
+
+function forwardCurrentEmail() {
+  if (!state.forwardEmail) { openForwardModal(); return }
+  showToast(`📤 Forward set to ${state.forwardEmail}. Requires server-side SMTP.`, 'info')
+}
+
+function printEmail() {
+  const subject = document.getElementById('detail-subject').textContent
+  const from = document.getElementById('detail-from').textContent
+  const date = document.getElementById('detail-date').textContent
+  const body = document.getElementById('detail-body').innerHTML
+  const w = window.open('', '_blank')
+  w.document.write(`<html><head><title>${subject}</title><style>body{font-family:sans-serif;padding:40px;max-width:700px;margin:auto}h1{font-size:20px}p{color:#666;font-size:14px}hr{border:none;border-top:1px solid #eee;margin:20px 0}</style></head><body><h1>${subject}</h1><p>From: ${from} · ${date}</p><hr>${body}</body></html>`)
+  w.document.close(); w.print()
+}
+
+function copyApiExample(id) {
+  const el = document.getElementById(id)
+  if (el) navigator.clipboard.writeText(el.textContent).then(() => showToast('Copied!', 'success'))
+}
+
+function installPWA() {
+  if (window._pwaPrompt) { window._pwaPrompt.prompt(); window._pwaPrompt.userChoice.then(() => { window._pwaPrompt = null }) }
+  document.getElementById('pwa-banner').classList.remove('show')
+}
+function dismissPWA() {
+  document.getElementById('pwa-banner').classList.remove('show')
+  localStorage.setItem('pwa_dismissed', '1')
+}
+
 // ── Init all page links ───────────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
-  showHome()
-})
+document.addEventListener('DOMContentLoaded', () => { showHome() })
 </script>
 </body>
 </html>

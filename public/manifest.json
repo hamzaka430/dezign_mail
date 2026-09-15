@@ -1,0 +1,27 @@
+{
+  "name": "Dezignmail — Disposable Email",
+  "short_name": "Dezignmail",
+  "description": "Enterprise-grade disposable email by Dezignwise. Instant temp inboxes, no signup required.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#080808",
+  "theme_color": "#0099ff",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["productivity", "utilities"],
+  "lang": "en-US",
+  "scope": "/"
+}
